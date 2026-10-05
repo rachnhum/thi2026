@@ -1,1147 +1,1249 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hệ Thống Thi & Ôn Tập Trắc Nghiệm Online</title>
-  
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- SheetJS (XLSX) CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <!-- FontAwesome CDN -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-    body {
-      font-family: 'Inter', sans-serif;
-    }
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: #f1f5f9;
-      border-radius: 4px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 4px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: #94a3b8;
-    }
-    .animate-pulse-fast {
-      animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Trắc Nghiệm Online</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SheetJS CDN for Excel parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        .option-card {
+            transition: all 0.2s ease-in-out;
+        }
+        .option-card:hover {
+            transform: translateY(-2px);
+        }
+        /* Style đáp án đúng trong chế độ ôn tập khi làm sai */
+        .correct-highlight {
+            background-color: #fef2f2 !important;
+            border-color: #ef4444 !important;
+            border-width: 2px !important;
+            color: #dc2626 !important;
+            font-weight: 800 !important;
+        }
+    </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+<body class="bg-slate-100 min-h-screen text-slate-800 font-sans">
 
-  <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 flex justify-between items-center">
-      <div class="flex items-center space-x-3 cursor-pointer" onclick="showView('view-upload')">
-        <div class="p-2 bg-indigo-600 rounded-xl shadow-inner">
-          <i class="fa-solid fa-graduation-cap text-2xl text-amber-300"></i>
-        </div>
-        <div>
-          <h1 class="text-lg sm:text-xl font-bold tracking-tight leading-tight">Hệ Thống Trắc Nghiệm Online</h1>
-          <p class="text-xs text-indigo-200 hidden sm:block">Ôn Tập & Thi Thử Chuyên Môn - Văn Hóa Doanh Nghiệp</p>
-        </div>
-      </div>
-      
-      <!-- Quick Status Badges -->
-      <div id="header-stats" class="hidden md:flex items-center space-x-3 bg-indigo-800/80 backdrop-blur px-4 py-1.5 rounded-full text-xs font-medium border border-indigo-600">
-        <span class="flex items-center"><i class="fa-solid fa-book-open text-teal-300 mr-1.5"></i>Văn hóa: <strong class="ml-1 text-amber-300" id="stat-vh-count">0</strong></span>
-        <span class="text-indigo-400">|</span>
-        <span class="flex items-center"><i class="fa-solid fa-briefcase text-sky-300 mr-1.5"></i>Chuyên môn: <strong class="ml-1 text-amber-300" id="stat-cm-count">0</strong></span>
-        <span class="text-indigo-400">|</span>
-        <span class="flex items-center"><i class="fa-solid fa-layer-group text-purple-300 mr-1.5"></i>Tổng câu: <strong class="ml-1 text-white" id="stat-total-count">0</strong></span>
-      </div>
-    </div>
-  </header>
-
-  <!-- MAIN VIEWPORT -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
-
-    <div id="view-upload" class="space-y-6">
-      
-      <!-- Hero Welcome & File Upload -->
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 relative overflow-hidden">
-        <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-indigo-50 rounded-full blur-2xl pointer-events-none"></div>
-        <div class="max-w-3xl mx-auto text-center space-y-4 relative z-10">
-          <span class="px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-semibold rounded-full border border-indigo-100">
-            <i class="fa-solid fa-sparkles mr-1 text-amber-500"></i> Nạp Đề Thi Linh Hoạt Từ Excel / CSV
-          </span>
-          <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Tải Lên Hoặc Dùng Ngân Hàng Câu Hỏi Mẫu</h2>
-          <p class="text-slate-600 text-sm leading-relaxed">
-            Nạp file danh sách câu hỏi riêng của bạn (.xlsx, .xls, .csv) hoặc bấm nút để sử dụng ngay ngân hàng <strong class="text-indigo-700">80+ câu hỏi mẫu</strong> tích hợp sẵn!
-          </p>
-
-          <!-- Dropzone -->
-          <div class="mt-4 border-2 border-dashed border-indigo-200 hover:border-indigo-500 bg-indigo-50/40 hover:bg-indigo-50/80 transition-all rounded-2xl p-6 sm:p-8 cursor-pointer relative group shadow-sm" id="drop-zone">
-            <input type="file" id="file-input" accept=".xlsx, .xls, .csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
-            <div class="flex flex-col items-center justify-center space-y-3">
-              <div class="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
-                <i class="fa-solid fa-cloud-arrow-up text-2xl"></i>
-              </div>
-              <div>
-                <p class="text-base font-semibold text-indigo-900">Nhấp để chọn file Excel/CSV hoặc kéo thả vào đây</p>
-                <p class="text-xs text-slate-500 mt-1">Hệ thống hỗ trợ các cột: Mục, Phần, Câu hỏi, Đáp án A-D, Đáp án đúng, Giải thích</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Template Downloads & Default Data Trigger -->
-          <div class="pt-2 flex flex-wrap justify-center gap-3">
-            <button onclick="downloadExcelTemplate()" class="inline-flex items-center px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-sm transition transform active:scale-95">
-              <i class="fa-solid fa-file-excel mr-2 text-sm"></i> Tải File Mẫu Excel (.xlsx)
-            </button>
-            <button onclick="downloadCSVTemplate()" class="inline-flex items-center px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-sm transition transform active:scale-95">
-              <i class="fa-solid fa-file-csv mr-2 text-sm"></i> Tải File Mẫu CSV (.csv)
-            </button>
-            <button onclick="loadDefault80Questions()" class="inline-flex items-center px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-xl shadow-sm transition transform active:scale-95">
-              <i class="fa-solid fa-bolt mr-2 text-amber-400"></i> Nạp Ngân Hàng Mẫu (80 Câu)
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Loaded Data Overview Dashboard -->
-      <div id="section-loaded-data" class="hidden space-y-6">
-        
-        <!-- Summary Stats Banner -->
-        <div class="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white rounded-2xl p-6 shadow-md relative overflow-hidden">
-          <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-indigo-700/60 pb-4 mb-4 gap-4">
-            <div>
-              <span class="text-xs font-semibold text-indigo-300 uppercase tracking-wider">Trạng Thái Dữ Liệu</span>
-              <h3 class="text-xl font-bold mt-0.5 flex items-center">
-                <i class="fa-solid fa-circle-check text-emerald-400 mr-2"></i> Đã Nạp Dữ Liệu Thành Công
-              </h3>
-            </div>
-            <div class="bg-indigo-800/80 backdrop-blur px-5 py-2.5 rounded-xl border border-indigo-600/50 flex items-center space-x-3">
-              <div class="text-right">
-                <span class="text-xs text-indigo-200 block">Tổng số câu trong ngân hàng</span>
-                <span id="dash-total-count" class="text-2xl font-black text-amber-300">0</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Detailed Breakdown Grid -->
-          <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
-            <div class="bg-indigo-800/40 p-3 rounded-xl border border-indigo-700/50 backdrop-blur">
-              <span class="text-[11px] text-indigo-200 block uppercase font-medium">Văn Hóa - Phần A</span>
-              <span id="count-vh-a" class="text-lg font-bold text-white">0</span>
-            </div>
-            <div class="bg-indigo-800/40 p-3 rounded-xl border border-indigo-700/50 backdrop-blur">
-              <span class="text-[11px] text-indigo-200 block uppercase font-medium">Văn Hóa - Phần B</span>
-              <span id="count-vh-b" class="text-lg font-bold text-white">0</span>
-            </div>
-            <div class="bg-indigo-800/40 p-3 rounded-xl border border-indigo-700/50 backdrop-blur">
-              <span class="text-[11px] text-indigo-200 block uppercase font-medium">Văn Hóa - Phần C</span>
-              <span id="count-vh-c" class="text-lg font-bold text-white">0</span>
-            </div>
-            <div class="bg-indigo-800/40 p-3 rounded-xl border border-indigo-700/50 backdrop-blur">
-              <span class="text-[11px] text-indigo-200 block uppercase font-medium">Văn Hóa - Phần D</span>
-              <span id="count-vh-d" class="text-lg font-bold text-white">0</span>
-            </div>
-            <div class="bg-indigo-800/40 p-3 rounded-xl border border-indigo-700/50 backdrop-blur col-span-2 sm:col-span-1">
-              <span class="text-[11px] text-indigo-200 block uppercase font-medium">Chuyên Môn</span>
-              <span id="count-cm-total" class="text-lg font-bold text-amber-300">0</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Mode Selection Cards Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-          <!-- Mode 1: Ôn Tập -->
-          <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between hover:border-indigo-400 hover:shadow-md transition group">
-            <div>
-              <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 bg-teal-100 text-teal-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <i class="fa-solid fa-book-open-reader text-xl"></i>
+    <!-- Header Navigation -->
+    <header class="bg-indigo-700 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="goHome()">
+                <div class="bg-white/10 p-2.5 rounded-xl backdrop-blur-md">
+                    <i class="fa-solid fa-graduation-cap text-2xl text-amber-300"></i>
                 </div>
-                <span class="px-2.5 py-1 bg-teal-50 text-teal-700 text-xs font-bold rounded-md">Không Giới Hạn</span>
-              </div>
-              <h3 class="text-lg font-bold text-slate-900">Chế Độ Ôn Tập</h3>
-              <p class="text-xs text-slate-600 mt-1 mb-4 leading-relaxed">
-                Luyện tập tự do từng câu hỏi. Khi trả lời sai, đáp án đúng sẽ hiện <strong class="text-red-600 font-extrabold underline">CHỮ ĐỎ IN ĐẬM NỔI BẬT</strong> kèm lời giải thích giúp bạn ghi nhớ nhanh chóng.
-              </p>
-
-              <div class="space-y-3 mb-6 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                <label class="block text-xs font-bold text-slate-700">Lựa chọn phạm vi ôn tập:</label>
-                <select id="practice-filter-select" class="w-full text-xs bg-white border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-teal-500 outline-none font-medium">
-                  <option value="ALL">Toàn bộ ngân hàng (Văn hóa & Chuyên môn)</option>
-                  <option value="VH_ALL">Tất cả mục Văn Hóa</option>
-                  <option value="VH_A">Văn Hóa - Phần A</option>
-                  <option value="VH_B">Văn Hóa - Phần B</option>
-                  <option value="VH_C">Văn Hóa - Phần C</option>
-                  <option value="VH_D">Văn Hóa - Phần D</option>
-                  <option value="CM_ALL">Tất cả mục Chuyên Môn</option>
-                </select>
-              </div>
-            </div>
-            <button onclick="startPracticeMode()" class="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl transition shadow-sm flex items-center justify-center active:scale-95">
-              <i class="fa-solid fa-play mr-2"></i> Bắt Đầu Ôn Tập Ngay
-            </button>
-          </div>
-
-          <!-- Mode 2: Thi Thử -->
-          <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between hover:border-indigo-400 hover:shadow-md transition group">
-            <div>
-              <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <i class="fa-solid fa-clock-rotate-left text-xl"></i>
+                <div>
+                    <h1 class="text-xl font-bold tracking-wide">Hệ Thống Trắc Nghiệm Online</h1>
+                    <p class="text-xs text-indigo-200">Ôn Tập & Thi Thử Chuyên Môn - Văn Hóa Doanh Nghiệp</p>
                 </div>
-                <span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-md">40 Câu / 40 Phút</span>
-              </div>
-              <h3 class="text-lg font-bold text-slate-900">Chế Độ Thi Thử</h3>
-              <p class="text-xs text-slate-600 mt-1 mb-4 leading-relaxed">
-                Mô phỏng kỳ thi thực tế có đồng hồ đếm ngược, tự động chấm điểm và tổng hợp bảng xem lại chi tiết sau khi hoàn thành.
-              </p>
-
-              <div class="space-y-2 mb-6">
-                <label class="block text-xs font-bold text-slate-700 mb-1">Chọn đề thi thử chuẩn cấu trúc:</label>
-                
-                <label class="flex items-start p-3 bg-slate-50 border rounded-xl cursor-pointer hover:bg-slate-100/80 transition">
-                  <input type="radio" name="exam-type" value="EXAM_VH" checked class="mt-0.5 text-indigo-600 focus:ring-indigo-500">
-                  <div class="ml-2.5 text-xs">
-                    <span class="font-bold text-slate-800 block">Mục 1: Đề Thi Văn Hóa (40 câu)</span>
-                    <span class="text-slate-500">Cấu trúc chuẩn: 14 câu phần A + 10 câu phần B + 8 câu phần C + 8 câu phần D</span>
-                  </div>
-                </label>
-
-                <label class="flex items-start p-3 bg-slate-50 border rounded-xl cursor-pointer hover:bg-slate-100/80 transition">
-                  <input type="radio" name="exam-type" value="EXAM_CM" class="mt-0.5 text-indigo-600 focus:ring-indigo-500">
-                  <div class="ml-2.5 text-xs">
-                    <span class="font-bold text-slate-800 block">Mục 2: Đề Thi Chuyên Môn (40 câu)</span>
-                    <span class="text-slate-500">Trích ngẫu nhiên 40 câu hỏi thuộc khối kiến thức Chuyên môn</span>
-                  </div>
-                </label>
-              </div>
             </div>
-            <button onclick="startExamMode()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition shadow-sm flex items-center justify-center active:scale-95">
-              <i class="fa-solid fa-pen-to-square mr-2"></i> Bắt Đầu Làm Bài Thi
-            </button>
-          </div>
-
-        </div>
-      </div>
-
-      <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-        <h3 class="text-sm font-bold text-slate-800 mb-3 flex items-center">
-          <i class="fa-brands fa-github text-indigo-600 text-base mr-2"></i> Hướng Dẫn Upload Web Lên GitHub Pages Miễn Phí
-        </h3>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs text-slate-600">
-          <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-            <span class="font-bold text-indigo-700 block mb-1">Bước 1: Tạo Repository</span>
-            <span>Đăng nhập GitHub, tạo kho lưu trữ mới (ví dụ: <code class="bg-white px-1 py-0.5 border rounded">thi-trac-nghiem</code>) chế độ Public.</span>
-          </div>
-          <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-            <span class="font-bold text-indigo-700 block mb-1">Bước 2: Upload File</span>
-            <span>Tải file mã nguồn này lên repo và đổi tên thành <code class="bg-white px-1 py-0.5 border rounded">index.html</code>. Bấm Commit changes.</span>
-          </div>
-          <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-            <span class="font-bold text-indigo-700 block mb-1">Bước 3: Bật GitHub Pages</span>
-            <span>Vào Settings &rarr; Pages &rarr; Mục Source chọn branch <code class="bg-white px-1 py-0.5 border rounded">main</code> (hoặc master) &rarr; Save.</span>
-          </div>
-          <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-            <span class="font-bold text-indigo-700 block mb-1">Bước 4: Sử Dụng Web</span>
-            <span>Chờ 1 phút, GitHub sẽ cấp đường link dạng: <code class="text-emerald-700 font-mono block mt-1">https://username.github.io/thi-trac-nghiem</code></span>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <div id="view-quiz" class="hidden space-y-6">
-      
-      <!-- Sticky Navigation Topbar -->
-      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm sticky top-16 z-40 flex flex-wrap items-center justify-between gap-3">
-        <div class="flex items-center space-x-3">
-          <button onclick="confirmExitQuiz()" class="text-slate-500 hover:text-slate-800 px-3 py-1.5 rounded-lg border text-xs font-semibold hover:bg-slate-50 transition">
-            <i class="fa-solid fa-arrow-left mr-1"></i> Thoát
-          </button>
-          <div>
-            <span id="quiz-mode-title" class="text-[11px] font-bold uppercase tracking-wider text-indigo-600 block">Chế độ</span>
-            <h2 id="quiz-progress-text" class="text-sm font-bold text-slate-800">Câu 1 / 40</h2>
-          </div>
-        </div>
-
-        <!-- Timer Area -->
-        <div id="timer-box" class="flex items-center space-x-2 bg-amber-50 border border-amber-200 text-amber-800 px-3.5 py-1.5 rounded-xl font-mono font-bold text-sm">
-          <i class="fa-solid fa-stopwatch text-amber-600"></i>
-          <span id="timer-display">40:00</span>
-        </div>
-
-        <div class="flex items-center space-x-2">
-          <button id="btn-submit-exam" onclick="confirmSubmitExam()" class="hidden px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition">
-            <i class="fa-solid fa-paper-plane mr-1.5"></i> Nộp Bài Thi
-          </button>
-        </div>
-      </div>
-
-      <!-- Main Question Layout -->
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        
-        <!-- Current Question Screen -->
-        <div class="lg:col-span-3 space-y-4">
-          <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
             
-            <div class="flex flex-wrap items-center gap-2 mb-4">
-              <span id="q-tag-category" class="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-md text-xs font-semibold">Văn hóa</span>
-              <span id="q-tag-part" class="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md text-xs font-semibold">Phần A</span>
+            <div id="stat-badge" class="flex items-center gap-2 bg-indigo-800/80 px-4 py-2 rounded-lg text-xs font-medium border border-indigo-500/30">
+                <span id="stat-vh" class="text-emerald-300"><i class="fa-solid fa-book text-xs mr-1"></i>Văn hóa: <b>0</b></span>
+                <span class="text-indigo-400">|</span>
+                <span id="stat-cm" class="text-sky-300"><i class="fa-solid fa-briefcase text-xs mr-1"></i>Chuyên môn: <b>0</b></span>
+                <span class="text-indigo-400">|</span>
+                <span id="stat-total" class="text-amber-300"><i class="fa-solid fa-layer-group text-xs mr-1"></i>Tổng câu: <b>0</b></span>
             </div>
-
-            <h3 id="q-text" class="text-base sm:text-lg font-bold text-slate-900 leading-relaxed mb-6">
-              Nội dung câu hỏi...
-            </h3>
-
-            <!-- Options List -->
-            <div id="q-options-container" class="space-y-3">
-              <!-- Dynamically populated options -->
-            </div>
-
-            <!-- Feedback & Explanation Box (Practice Mode) -->
-            <div id="practice-feedback" class="hidden mt-6 p-4 rounded-xl border text-sm leading-relaxed transition-all">
-              <!-- Rendered via JS -->
-            </div>
-
-          </div>
-
-          <!-- Bottom Control Bar -->
-          <div class="flex items-center justify-between pt-2">
-            <button id="btn-prev-q" onclick="navigateQuestion(-1)" class="px-4 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl transition">
-              <i class="fa-solid fa-chevron-left mr-1"></i> Câu Trước
-            </button>
-            <button id="btn-next-q" onclick="navigateQuestion(1)" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl transition">
-              Câu Tiếp theo <i class="fa-solid fa-chevron-right ml-1"></i>
-            </button>
-          </div>
         </div>
-
-        <!-- Right Side: Questions Navigator Grid -->
-        <div class="lg:col-span-1">
-          <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm sticky top-36">
-            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 flex justify-between items-center">
-              <span>Bản Đồ Câu Hỏi</span>
-              <span id="grid-answered-count" class="text-indigo-600 font-bold">0/40</span>
-            </h4>
-            
-            <div id="questions-grid" class="grid grid-cols-5 sm:grid-cols-8 lg:grid-cols-5 gap-2 max-h-[360px] overflow-y-auto custom-scrollbar p-1">
-              <!-- Dynamic Grid Buttons -->
-            </div>
-
-            <div class="mt-4 pt-3 border-t border-slate-100 text-[11px] space-y-1.5 text-slate-500">
-              <div class="flex items-center"><span class="w-3 h-3 rounded-md bg-slate-100 border border-slate-300 mr-2"></span> Chưa làm</div>
-              <div class="flex items-center"><span class="w-3 h-3 rounded-md bg-indigo-600 text-white mr-2"></span> Đã chọn</div>
-              <div class="flex items-center"><span class="w-3 h-3 rounded-md bg-emerald-500 text-white mr-2"></span> Đúng (Ôn tập)</div>
-              <div class="flex items-center"><span class="w-3 h-3 rounded-md bg-rose-500 text-white mr-2"></span> Sai (Ôn tập)</div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <div id="view-result" class="hidden space-y-6">
-      
-      <!-- Score Banner -->
-      <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm text-center max-w-2xl mx-auto space-y-4">
-        <div id="result-icon-box" class="w-20 h-20 mx-auto rounded-full flex items-center justify-center text-3xl mb-2">
-          <i class="fa-solid fa-trophy"></i>
-        </div>
-        <h2 id="result-title" class="text-2xl font-bold text-slate-900">Kết Quả Bài Thi</h2>
-        <p id="result-subtitle" class="text-xs text-slate-500">Chi tiết điểm số và danh sách đáp án</p>
-
-        <div class="py-4 bg-slate-50 rounded-2xl border border-slate-200 inline-block px-10 my-2">
-          <span class="text-xs text-slate-500 block uppercase tracking-wider font-semibold">Điểm Số Đạt Được</span>
-          <span id="result-score" class="text-4xl font-black text-indigo-600">0 / 40</span>
-          <span id="result-percentage" class="block text-xs font-bold text-slate-600 mt-1">0%</span>
-        </div>
-
-        <div class="flex justify-center space-x-6 text-sm pt-2">
-          <div><span class="text-slate-500 text-xs block">Đúng</span><strong id="result-correct-count" class="text-emerald-600 text-lg font-bold">0</strong></div>
-          <div class="w-px bg-slate-200"></div>
-          <div><span class="text-slate-500 text-xs block">Sai</span><strong id="result-wrong-count" class="text-rose-600 text-lg font-bold">0</strong></div>
-          <div class="w-px bg-slate-200"></div>
-          <div><span class="text-slate-500 text-xs block">Bỏ qua</span><strong id="result-skipped-count" class="text-slate-400 text-lg font-bold">0</strong></div>
-        </div>
-
-        <div class="pt-4 flex justify-center gap-3">
-          <button onclick="showView('view-upload')" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition shadow-sm">
-            <i class="fa-solid fa-rotate-right mr-1.5"></i> Về Trang Cấu Hình & Thi Tiếp
-          </button>
-        </div>
-      </div>
-
-      <!-- Detailed Question Review -->
-      <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">
-        <h3 class="text-base font-bold text-slate-800 border-b pb-3 flex items-center">
-          <i class="fa-solid fa-list-check text-indigo-600 mr-2"></i> Chi Tiết Lời Giải & Bảng Đáp Án
-        </h3>
-
-        <div id="review-list-container" class="space-y-6">
-          <!-- Rendered dynamically -->
-        </div>
-      </div>
-
-    </div>
-
-  </main>
-
-  <script>
-    // --- APP STATE ---
-    let rawQuestions = [];
-    let currentQuizQuestions = [];
-    let userAnswers = {}; // { questionIndex: 'A'|'B'|'C'|'D' }
-    let currentQuestionIdx = 0;
-    let quizMode = 'PRACTICE'; // 'PRACTICE' or 'EXAM'
-    let timerInterval = null;
-    let timeRemaining = 2400; // 40 mins in seconds
-
-    // --- DOM REFERENCES ---
-    const dropZone = document.getElementById('drop-zone');
-    const fileInput = document.getElementById('file-input');
-
-    // --- INIT APP ---
-    window.onload = function() {
-      setupDragAndDrop();
-      loadDefault80Questions();
-    };
-
-    // View Navigation Helper
-    function showView(viewId) {
-      document.getElementById('view-upload').classList.add('hidden');
-      document.getElementById('view-quiz').classList.add('hidden');
-      document.getElementById('view-result').classList.add('hidden');
-
-      document.getElementById(viewId).classList.remove('hidden');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    // --- 1. DRAG & DROP AND FILE HANDLING ---
-    function setupDragAndDrop() {
-      fileInput.addEventListener('change', handleFileSelect);
-
-      ['dragenter', 'dragover'].forEach(eventName => {
-        dropZone.addEventListener(eventName, (e) => {
-          e.preventDefault();
-          dropZone.classList.add('border-indigo-600', 'bg-indigo-100/60');
-        }, false);
-      });
-
-      ['dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, (e) => {
-          e.preventDefault();
-          dropZone.classList.remove('border-indigo-600', 'bg-indigo-100/60');
-        }, false);
-      });
-
-      dropZone.addEventListener('drop', (e) => {
-        const dt = e.dataTransfer;
-        if (dt.files && dt.files.length > 0) {
-          fileInput.files = dt.files;
-          handleFileSelect();
-        }
-      });
-    }
-
-    function handleFileSelect() {
-      const files = fileInput.files;
-      if (!files || files.length === 0) return;
-
-      const file = files[0];
-      const reader = new FileReader();
-
-      reader.onload = function (e) {
-        try {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
-
-          if (jsonData.length === 0) {
-            alert("File không chứa dữ liệu!");
-            return;
-          }
-
-          parseAndNormalizeJSON(jsonData);
-        } catch (err) {
-          alert("Lỗi đọc file: " + err.message);
-        }
-      };
-
-      reader.readAsArrayBuffer(file);
-    }
-
-    function getSampleRows() {
-      return [
-        {
-          "Mục": "Văn hóa",
-          "Phần": "A",
-          "Câu hỏi": "Giá trị cốt lõi đầu tiên của Văn hóa doanh nghiệp là gì?",
-          "Đáp án A": "Tôn trọng con người và chính trực",
-          "Đáp án B": "Tối đa hóa lợi nhuận bằng mọi giá",
-          "Đáp án C": "Cắt giảm chi phí đào tạo nhân sự",
-          "Đáp án D": "Tránh né rủi ro và không đổi mới",
-          "Đáp án đúng": "A",
-          "Giải thích": "Tôn trọng và chính trực là nền tảng cốt lõi hàng đầu."
-        },
-        {
-          "Mục": "Văn hóa",
-          "Phần": "B",
-          "Câu hỏi": "Khi giao tiếp với đối tác, nhân viên cần tuân thủ nguyên tắc nào?",
-          "Đáp án A": "Thờ ơ, chậm trễ phản hồi",
-          "Đáp án B": "Chuyên nghiệp, đúng hẹn và minh bạch",
-          "Đáp án C": "Tự ý cam kết ngoài thẩm quyền",
-          "Đáp án D": "Chỉ làm việc qua tin nhắn cá nhân",
-          "Đáp án đúng": "B",
-          "Giải thích": "Tính chuyên nghiệp và minh bạch tạo dựng uy tín doanh nghiệp."
-        },
-        {
-          "Mục": "Chuyên môn",
-          "Phần": "",
-          "Câu hỏi": "Thứ tự tiêu chuẩn của quy trình xử lý công việc là gì?",
-          "Đáp án A": "Thực hiện -> Lập kế hoạch -> Kiểm tra",
-          "Đáp án B": "Lập kế hoạch -> Thực hiện -> Kiểm tra -> Cải tiến",
-          "Đáp án C": "Kiểm tra -> Thực hiện -> Lập kế hoạch",
-          "Đáp án D": "Báo cáo -> Thực hiện -> Bỏ qua kiểm tra",
-          "Đáp án đúng": "B",
-          "Giải thích": "Áp dụng chu trình PDCA (Plan - Do - Check - Act)."
-        }
-      ];
-    }
-
-    function downloadExcelTemplate() {
-      try {
-        const sampleData = getSampleRows();
-        const worksheet = XLSX.utils.json_to_sheet(sampleData);
-        
-        worksheet['!cols'] = [
-          { wch: 12 }, { wch: 8 }, { wch: 45 },
-          { wch: 25 }, { wch: 25 }, { wch: 25 }, { wch: 25 },
-          { wch: 12 }, { wch: 35 }
-        ];
-
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Mau_Cau_Hoi");
-
-        const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-        const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        
-        triggerDownload(blob, "Mau_Cau_Hoi_Trac_Nghiem.xlsx");
-      } catch (err) {
-        alert("Lỗi khi tạo file Excel mẫu: " + err.message);
-      }
-    }
-
-    function downloadCSVTemplate() {
-      try {
-        const sampleData = getSampleRows();
-        const headers = ["Mục", "Phần", "Câu hỏi", "Đáp án A", "Đáp án B", "Đáp án C", "Đáp án D", "Đáp án đúng", "Giải thích"];
-        
-        let csvContent = "\uFEFF"; // UTF-8 BOM
-        csvContent += headers.join(",") + "\n";
-
-        sampleData.forEach(row => {
-          const line = headers.map(h => `"${(row[h] || '').replace(/"/g, '""')}"`).join(",");
-          csvContent += line + "\n";
-        });
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        triggerDownload(blob, "Mau_Cau_Hoi_Trac_Nghiem.csv");
-      } catch (err) {
-        alert("Lỗi khi tạo file CSV mẫu: " + err.message);
-      }
-    }
-
-    function triggerDownload(blob, fileName) {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 100);
-    }
-
-    function cleanStr(str) {
-      if (!str) return '';
-      return String(str)
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .trim();
-    }
-
-    function parseAndNormalizeJSON(rows) {
-      if (!rows || rows.length === 0) return;
-
-      const firstRow = rows[0];
-      const rawKeys = Object.keys(firstRow);
-
-      let colMap = {
-        question: null, optA: null, optB: null, optC: null, optD: null,
-        correct: null, category: null, part: null, explanation: null
-      };
-
-      rawKeys.forEach(k => {
-        const c = cleanStr(k);
-        if (c.includes("cau hoi") || c.includes("question") || c.includes("noi dung")) colMap.question = k;
-        else if (c === "a" || c.includes("dap an a") || c.includes("option a") || c === "phuong an a") colMap.optA = k;
-        else if (c === "b" || c.includes("dap an b") || c.includes("option b") || c === "phuong an b") colMap.optB = k;
-        else if (c === "c" || c.includes("dap an c") || c.includes("option c") || c === "phuong an c") colMap.optC = k;
-        else if (c === "d" || c.includes("dap an d") || c.includes("option d") || c === "phuong an d") colMap.optD = k;
-        else if (c.includes("dap an dung") || c.includes("key") || c.includes("answer") || c === "dap an") colMap.correct = k;
-        else if (c.includes("muc") || c.includes("category") || c.includes("che do") || c.includes("loai")) colMap.category = k;
-        else if (c.includes("phan") || c.includes("part") || c.includes("sub")) colMap.part = k;
-        else if (c.includes("giai thich") || c.includes("explanation") || c.includes("ghi chu")) colMap.explanation = k;
-      });
-
-      if (!colMap.question || !colMap.optA || !colMap.optB || !colMap.correct) {
-        alert("File thiếu các cột chuẩn bắt buộc!\nVui lòng đảm bảo file có tiêu đề: Câu hỏi, Đáp án A, Đáp án B, Đáp án đúng.");
-        return;
-      }
-
-      const parsed = [];
-
-      rows.forEach((row) => {
-        const qText = String(row[colMap.question] || '').trim();
-        if (!qText) return;
-
-        let rawKey = String(row[colMap.correct] || '').trim().toUpperCase();
-        if (rawKey === '1') rawKey = 'A';
-        if (rawKey === '2') rawKey = 'B';
-        if (rawKey === '3') rawKey = 'C';
-        if (rawKey === '4') rawKey = 'D';
-
-        let cat = colMap.category ? String(row[colMap.category] || '').trim() : 'Văn hóa';
-        let catClean = cleanStr(cat);
-        let categoryNormalized = "Văn hóa";
-        if (catClean.includes("chuyen mon") || catClean.includes("professional") || catClean.includes("cm")) {
-          categoryNormalized = "Chuyên môn";
-        }
-
-        let partVal = colMap.part ? String(row[colMap.part] || '').trim().toUpperCase() : 'A';
-        if (!['A', 'B', 'C', 'D'].includes(partVal)) {
-          partVal = 'A';
-        }
-
-        parsed.push({
-          category: categoryNormalized,
-          part: categoryNormalized === "Văn hóa" ? partVal : "",
-          question: qText,
-          options: {
-            'A': String(row[colMap.optA] || '').trim(),
-            'B': String(row[colMap.optB] || '').trim(),
-            'C': String(row[colMap.optC] || '').trim(),
-            'D': colMap.optD ? String(row[colMap.optD] || '').trim() : ''
-          },
-          correctKey: ['A', 'B', 'C', 'D'].includes(rawKey) ? rawKey : 'A',
-          explanation: colMap.explanation ? String(row[colMap.explanation] || '').trim() : ''
-        });
-      });
-
-      if (parsed.length === 0) {
-        alert("Không tìm thấy dữ liệu câu hỏi hợp lệ!");
-        return;
-      }
-
-      processLoadedQuestions(parsed);
-    }
-
-    function loadDefault80Questions() {
-      const questions = [];
-      const parts = ['A', 'B', 'C', 'D'];
-
-      // 40 Culture questions (10 for each part A, B, C, D)
-      parts.forEach((p) => {
-        for (let i = 1; i <= 10; i++) {
-          questions.push({
-            category: 'Văn hóa',
-            part: p,
-            question: `[Văn Hóa - Phần ${p}] Câu hỏi kiểm tra kiến thức văn hóa số ${i}: Nội dung ứng xử và hành vi chuẩn mực của nhân viên theo phần ${p}?`,
-            options: {
-              'A': `Phương án A - Chuẩn mực ứng xử văn hóa phần ${p} câu ${i}`,
-              'B': `Phương án B - Hành vi chưa phù hợp văn hóa phần ${p} câu ${i}`,
-              'C': `Phương án C - Quy định liên quan đến giao tiếp phần ${p}`,
-              'D': `Phương án D - Phương án dự phòng thử nghiệm ${i}`
-            },
-            correctKey: ['A', 'B', 'C', 'D'][(i - 1) % 4],
-            explanation: `Giải thích chi tiết cho câu ${i} Phần ${p}: Việc tuân thủ quy tắc ứng xử giúp nâng cao tính chuyên nghiệp.`
-          });
-        }
-      });
-
-      // 40 Professional questions
-      for (let i = 1; i <= 40; i++) {
-        questions.push({
-          category: 'Chuyên môn',
-          part: '',
-          question: `[Chuyên Môn] Câu hỏi chuyên môn nghiệp vụ số ${i}: Tình huống xử lý nghiệp vụ tiêu chuẩn trong công việc thực tế?`,
-          options: {
-            'A': `Giải pháp nghiệp vụ A cho câu ${i}`,
-            'B': `Giải pháp nghiệp vụ B cho câu ${i}`,
-            'C': `Giải pháp nghiệp vụ C cho câu ${i}`,
-            'D': `Giải pháp nghiệp vụ D cho câu ${i}`
-          },
-          correctKey: ['A', 'B', 'C', 'D'][(i + 1) % 4],
-          explanation: `Giải thích quy trình chuyên môn cho câu ${i}: Thực hiện chuẩn xác theo hướng dẫn nghiệp vụ.`
-        });
-      }
-
-      processLoadedQuestions(questions);
-    }
-
-    function processLoadedQuestions(questions) {
-      rawQuestions = questions;
-
-      let countVHA = 0, countVHB = 0, countVHC = 0, countVHD = 0, countCM = 0;
-
-      rawQuestions.forEach(q => {
-        if (q.category === 'Văn hóa') {
-          if (q.part === 'A') countVHA++;
-          else if (q.part === 'B') countVHB++;
-          else if (q.part === 'C') countVHC++;
-          else if (q.part === 'D') countVHD++;
-          else countVHA++;
-        } else {
-          countCM++;
-        }
-      });
-
-      const totalVH = countVHA + countVHB + countVHC + countVHD;
-      
-      // Update Header Stats
-      document.getElementById('stat-vh-count').innerText = totalVH;
-      document.getElementById('stat-cm-count').innerText = countCM;
-      document.getElementById('stat-total-count').innerText = rawQuestions.length;
-
-      // Update Dashboard Stats
-      document.getElementById('dash-total-count').innerText = rawQuestions.length;
-      document.getElementById('count-vh-a').innerText = countVHA;
-      document.getElementById('count-vh-b').innerText = countVHB;
-      document.getElementById('count-vh-c').innerText = countVHC;
-      document.getElementById('count-vh-d').innerText = countVHD;
-      document.getElementById('count-cm-total').innerText = countCM;
-
-      document.getElementById('section-loaded-data').classList.remove('hidden');
-    }
-
-    function startPracticeMode() {
-      quizMode = 'PRACTICE';
-      const filter = document.getElementById('practice-filter-select').value;
-
-      if (filter === 'ALL') {
-        currentQuizQuestions = [...rawQuestions];
-      } else if (filter === 'VH_ALL') {
-        currentQuizQuestions = rawQuestions.filter(q => q.category === 'Văn hóa');
-      } else if (filter.startsWith('VH_')) {
-        const p = filter.replace('VH_', '');
-        currentQuizQuestions = rawQuestions.filter(q => q.category === 'Văn hóa' && q.part === p);
-      } else if (filter === 'CM_ALL') {
-        currentQuizQuestions = rawQuestions.filter(q => q.category === 'Chuyên môn');
-      }
-
-      if (currentQuizQuestions.length === 0) {
-        alert("Không tìm thấy câu hỏi phù hợp với bộ lọc!");
-        return;
-      }
-
-      setupQuizSession("ÔN TẬP TỰ DO");
-    }
-
-    function startExamMode() {
-      quizMode = 'EXAM';
-      const examType = document.querySelector('input[name="exam-type"]:checked').value;
-      currentQuizQuestions = [];
-
-      if (examType === 'EXAM_VH') {
-        // Culture Exam: Structure 14 A + 10 B + 8 C + 8 D = 40
-        const vhA = shuffleArray(rawQuestions.filter(q => q.category === 'Văn hóa' && q.part === 'A'));
-        const vhB = shuffleArray(rawQuestions.filter(q => q.category === 'Văn hóa' && q.part === 'B'));
-        const vhC = shuffleArray(rawQuestions.filter(q => q.category === 'Văn hóa' && q.part === 'C'));
-        const vhD = shuffleArray(rawQuestions.filter(q => q.category === 'Văn hóa' && q.part === 'D'));
-
-        const selectedA = vhA.slice(0, 14);
-        const selectedB = vhB.slice(0, 10);
-        const selectedC = vhC.slice(0, 8);
-        const selectedD = vhD.slice(0, 8);
-
-        currentQuizQuestions = [...selectedA, ...selectedB, ...selectedC, ...selectedD];
-
-        // Fallback fill if missing questions in specific parts
-        if (currentQuizQuestions.length < 40) {
-          const remaining = rawQuestions.filter(q => q.category === 'Văn hóa' && !currentQuizQuestions.includes(q));
-          const extraNeeded = 40 - currentQuizQuestions.length;
-          currentQuizQuestions.push(...shuffleArray(remaining).slice(0, extraNeeded));
-        }
-      } else {
-        // Professional Exam: 40 questions random
-        const cmList = shuffleArray(rawQuestions.filter(q => q.category === 'Chuyên môn'));
-        currentQuizQuestions = cmList.slice(0, 40);
-      }
-
-      if (currentQuizQuestions.length === 0) {
-        alert("Không đủ câu hỏi để tạo đề thi thử!");
-        return;
-      }
-
-      setupQuizSession("BÀI THI THỬ (40 CÂU - 40 PHÚT)");
-      startTimer();
-    }
-
-    function setupQuizSession(titleText) {
-      userAnswers = {};
-      currentQuestionIdx = 0;
-
-      document.getElementById('quiz-mode-title').innerText = titleText;
-      showView('view-quiz');
-
-      if (quizMode === 'EXAM') {
-        document.getElementById('timer-box').classList.remove('hidden');
-        document.getElementById('btn-submit-exam').classList.remove('hidden');
-      } else {
-        document.getElementById('timer-box').classList.add('hidden');
-        document.getElementById('btn-submit-exam').classList.add('hidden');
-      }
-
-      renderQuestionsGrid();
-      renderCurrentQuestion();
-    }
-
-    function renderCurrentQuestion() {
-      const q = currentQuizQuestions[currentQuestionIdx];
-
-      document.getElementById('quiz-progress-text').innerText = `Câu ${currentQuestionIdx + 1} / ${currentQuizQuestions.length}`;
-      document.getElementById('q-tag-category').innerText = q.category;
-      
-      const partTag = document.getElementById('q-tag-part');
-      if (q.part) {
-        partTag.innerText = `Phần ${q.part}`;
-        partTag.classList.remove('hidden');
-      } else {
-        partTag.classList.add('hidden');
-      }
-
-      document.getElementById('q-text').innerText = q.question;
-
-      const container = document.getElementById('q-options-container');
-      container.innerHTML = '';
-
-      const userChoice = userAnswers[currentQuestionIdx];
-      const isAnswered = userAnswers.hasOwnProperty(currentQuestionIdx);
-
-      ['A', 'B', 'C', 'D'].forEach(key => {
-        const optText = q.options[key];
-        if (!optText) return;
-
-        const optBtn = document.createElement('div');
-        optBtn.onclick = () => selectOption(key);
-
-        let cardStyle = "p-4 rounded-xl border transition cursor-pointer flex items-start space-x-3 ";
-
-        if (quizMode === 'PRACTICE' && isAnswered) {
-          // Practice Mode Visual Feedback
-          if (key === q.correctKey) {
-            // PROMINENT RED BOLD STYLING FOR CORRECT ANSWER WHEN USER IS WRONG OR GENERAL HIGHLIGHT
-            if (userChoice !== q.correctKey) {
-              cardStyle += "bg-red-100 border-red-500 text-red-900 font-extrabold ring-2 ring-red-400 shadow-sm"; // RED BOLD
-            } else {
-              cardStyle += "bg-emerald-50 border-emerald-500 text-emerald-900 font-bold ring-2 ring-emerald-300";
-            }
-          } else if (key === userChoice && userChoice !== q.correctKey) {
-            cardStyle += "bg-slate-100 border-slate-300 text-slate-400 line-through opacity-70";
-          } else {
-            cardStyle += "bg-white border-slate-200 opacity-60";
-          }
-        } else {
-          // Standard selection style
-          if (userChoice === key) {
-            cardStyle += "bg-indigo-50 border-indigo-500 ring-2 ring-indigo-200 font-semibold text-indigo-900";
-          } else {
-            cardStyle += "bg-white hover:bg-slate-50 border-slate-200 text-slate-800";
-          }
-        }
-
-        optBtn.className = cardStyle;
-
-        let badgeStyle = "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 ";
-        if (quizMode === 'PRACTICE' && isAnswered && key === q.correctKey) {
-          badgeStyle += userChoice !== q.correctKey ? "bg-red-600 text-white font-black" : "bg-emerald-600 text-white";
-        } else if (userChoice === key) {
-          badgeStyle += "bg-indigo-600 text-white";
-        } else {
-          badgeStyle += "bg-slate-200 text-slate-600";
-        }
-
-        optBtn.innerHTML = `
-          <span class="${badgeStyle}">${key}</span>
-          <span class="text-sm leading-relaxed">${escapeHTML(optText)}</span>
-        `;
-
-        container.appendChild(optBtn);
-      });
-
-      // Feedback Box
-      const feedbackBox = document.getElementById('practice-feedback');
-      if (quizMode === 'PRACTICE' && isAnswered) {
-        feedbackBox.classList.remove('hidden');
-        if (userChoice === q.correctKey) {
-          feedbackBox.className = "mt-6 p-4 rounded-xl border bg-emerald-50 border-emerald-300 text-emerald-900 text-sm";
-          feedbackBox.innerHTML = `
-            <div class="flex items-start">
-              <i class="fa-solid fa-circle-check text-emerald-600 text-lg mr-2.5 mt-0.5"></i>
-              <div>
-                <strong class="text-emerald-800 text-base block">Chính xác!</strong>
-                <p class="mt-1 text-xs text-emerald-700">${escapeHTML(q.explanation || 'Bạn đã chọn đúng đáp án.')}</p>
-              </div>
-            </div>
-          `;
-        } else {
-          feedbackBox.className = "mt-6 p-4 rounded-xl border-2 bg-red-50 border-red-400 text-red-950 text-sm shadow-sm";
-          feedbackBox.innerHTML = `
-            <div class="flex items-start">
-              <i class="fa-solid fa-triangle-exclamation text-red-600 text-xl mr-3 mt-0.5 animate-pulse"></i>
-              <div>
-                <span class="font-black text-red-700 text-base block uppercase tracking-wide">RẤT TIẾC, BẠN ĐÃ TRẢ LỜI SAI!</span>
-                <p class="mt-1 text-sm font-medium text-slate-800">
-                  Đáp án đúng chính xác là: 
-                  <span class="text-red-600 font-black underline text-base ml-1">ĐÁP ÁN ${q.correctKey}: ${escapeHTML(q.options[q.correctKey])}</span>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-5xl mx-auto px-4 py-8">
+
+        <!-- VIEW 1: HOME & FILE UPLOAD -->
+        <section id="view-home" class="space-y-8">
+            <!-- Upload Box -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 border border-slate-200 text-center">
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">Tải Lên Hoặc Dùng Ngân Hàng Câu Hỏi Mẫu</h2>
+                <p class="text-slate-500 text-sm mb-6 max-w-2xl mx-auto">
+                    Nạp file danh sách câu hỏi riêng của bạn (.xlsx, .xls, .csv) hoặc bấm nút bên dưới để tải file mẫu chuẩn về máy.
                 </p>
-                ${q.explanation ? `<p class="mt-2 text-xs bg-white/80 p-2.5 rounded-lg border border-red-200 text-slate-700"><strong>Giải thích:</strong> ${escapeHTML(q.explanation)}</p>` : ''}
-              </div>
+
+                <!-- Drag & Drop Zone -->
+                <div id="drop-zone" onclick="document.getElementById('file-input').click()" 
+                     class="border-2 border-dashed border-indigo-300 bg-indigo-50/50 hover:bg-indigo-50 rounded-2xl p-8 cursor-pointer transition-all flex flex-col items-center justify-center group mb-6">
+                    <input type="file" id="file-input" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleFileSelect(event)">
+                    <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                    </div>
+                    <p class="text-slate-700 font-semibold text-base mb-1">Nhấp để chọn file Excel/CSV hoặc kéo thả vào đây</p>
+                    <p class="text-slate-400 text-xs">Hỗ trợ tự động khớp tiêu đề cột linh hoạt</p>
+                </div>
+
+                <!-- Template Download & Preset Buttons -->
+                <div class="flex flex-wrap justify-center gap-3">
+                    <button onclick="downloadSampleExcel()" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2.5 rounded-xl text-sm shadow-md transition-all">
+                        <i class="fa-solid fa-file-excel"></i> Tải File Mẫu Excel (.xlsx)
+                    </button>
+                    <button onclick="downloadSampleCSV()" class="inline-flex items-center gap-2 bg-slate-700 hover:bg-slate-800 text-white font-medium px-4 py-2.5 rounded-xl text-sm shadow-md transition-all">
+                        <i class="fa-solid fa-file-csv"></i> Tải File Mẫu CSV (.csv)
+                    </button>
+                    <button onclick="loadDefaultQuestions()" class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold px-4 py-2.5 rounded-xl text-sm shadow-md transition-all">
+                        <i class="fa-solid fa-bolt"></i> Nạp Ngân Hàng Mẫu (80 Câu)
+                    </button>
+                </div>
             </div>
-          `;
-        }
-      } else {
-        feedbackBox.classList.add('hidden');
-      }
 
-      // Update Controls
-      document.getElementById('btn-prev-q').disabled = currentQuestionIdx === 0;
-      document.getElementById('btn-next-q').innerText = (currentQuestionIdx === currentQuizQuestions.length - 1) ? "Câu Cuối" : "Câu Tiếp ";
+            <!-- Mode Selection Options -->
+            <div id="mode-selection" class="grid md:grid-cols-3 gap-6 hidden">
+                <!-- Mode 1: Practice -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-md hover:shadow-xl transition-all flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-xl font-bold mb-4">
+                            <i class="fa-solid fa-book-open"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-800 mb-2">Chế Độ Ôn Tập</h3>
+                        <p class="text-slate-500 text-xs leading-relaxed mb-4">
+                            Làm toàn bộ danh sách câu hỏi. Không giới hạn thời gian. <strong>Khi trả lời sai, đáp án đúng sẽ hiện khung đỏ chữ in đậm nổi bật ngay lập tức</strong> kèm giải thích.
+                        </p>
+                    </div>
+                    <button onclick="startPracticeMode()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl transition-all text-sm shadow">
+                        Bắt Đầu Ôn Tập <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
 
-      renderQuestionsGrid();
-    }
+                <!-- Mode 2: Cultural Exam -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-md hover:shadow-xl transition-all flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center text-xl font-bold mb-4">
+                            <i class="fa-solid fa-landmark"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-800 mb-2">Thi Thử Văn Hóa</h3>
+                        <p class="text-slate-500 text-xs leading-relaxed mb-4">
+                            Đề thi gồm <strong>40 câu</strong> ngẫu nhiên phân bổ chuẩn cấu trúc:
+                            <br><span class="inline-block mt-1 bg-slate-100 px-2 py-0.5 rounded text-[11px] font-medium text-slate-700">Phần A: 14 câu</span>
+                            <span class="inline-block bg-slate-100 px-2 py-0.5 rounded text-[11px] font-medium text-slate-700">Phần B: 10 câu</span>
+                            <span class="inline-block bg-slate-100 px-2 py-0.5 rounded text-[11px] font-medium text-slate-700">Phần C: 8 câu</span>
+                            <span class="inline-block bg-slate-100 px-2 py-0.5 rounded text-[11px] font-medium text-slate-700">Phần D: 8 câu</span>
+                        </p>
+                    </div>
+                    <button onclick="startExamCulture()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition-all text-sm shadow">
+                        Thi Thử Văn Hóa (40 Phút) <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
 
-    function selectOption(key) {
-      userAnswers[currentQuestionIdx] = key;
-      renderCurrentQuestion();
-    }
-
-    function navigateQuestion(direction) {
-      const newIdx = currentQuestionIdx + direction;
-      if (newIdx >= 0 && newIdx < currentQuizQuestions.length) {
-        currentQuestionIdx = newIdx;
-        renderCurrentQuestion();
-      }
-    }
-
-    function jumpToQuestion(idx) {
-      currentQuestionIdx = idx;
-      renderCurrentQuestion();
-    }
-
-    function renderQuestionsGrid() {
-      const grid = document.getElementById('questions-grid');
-      grid.innerHTML = '';
-
-      currentQuizQuestions.forEach((q, idx) => {
-        const btn = document.createElement('button');
-        btn.id = `grid-btn-${idx}`;
-        btn.innerText = idx + 1;
-        btn.onclick = () => jumpToQuestion(idx);
-        btn.className = getGridButtonClass(idx);
-        grid.appendChild(btn);
-      });
-
-      const answeredCount = Object.keys(userAnswers).length;
-      document.getElementById('grid-answered-count').innerText = `${answeredCount}/${currentQuizQuestions.length}`;
-    }
-
-    function getGridButtonClass(idx) {
-      const base = "w-8 h-8 rounded-lg font-bold text-xs flex items-center justify-center transition ";
-      const isSelected = userAnswers.hasOwnProperty(idx);
-      const isCurrent = idx === currentQuestionIdx;
-
-      if (isCurrent) {
-        return base + "ring-2 ring-indigo-600 bg-indigo-100 text-indigo-900 border-indigo-400 font-black";
-      }
-
-      if (quizMode === 'PRACTICE' && isSelected) {
-        const userChoice = userAnswers[idx];
-        const correct = currentQuizQuestions[idx].correctKey;
-        if (userChoice === correct) {
-          return base + "bg-emerald-500 text-white font-bold";
-        } else {
-          return base + "bg-rose-500 text-white font-bold";
-        }
-      }
-
-      if (isSelected) {
-        return base + "bg-indigo-600 text-white";
-      }
-
-      return base + "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200";
-    }
-
-    function startTimer() {
-      clearInterval(timerInterval);
-      timeRemaining = 2400; // 40 mins
-
-      timerInterval = setInterval(() => {
-        timeRemaining--;
-        const mins = Math.floor(timeRemaining / 60);
-        const secs = timeRemaining % 60;
-
-        document.getElementById('timer-display').innerText = 
-          `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-
-        if (timeRemaining <= 0) {
-          clearInterval(timerInterval);
-          alert("Thời gian làm bài thi đã hết! Hệ thống tự động nộp bài.");
-          submitExam();
-        }
-      }, 1000);
-    }
-
-    function confirmSubmitExam() {
-      const answered = Object.keys(userAnswers).length;
-      const total = currentQuizQuestions.length;
-      if (confirm(`Bạn đã làm ${answered}/${total} câu. Bạn có chắc chắn muốn nộp bài thi ngay?`)) {
-        submitExam();
-      }
-    }
-
-    function submitExam() {
-      clearInterval(timerInterval);
-
-      let correctCount = 0;
-      let wrongCount = 0;
-      let skippedCount = 0;
-
-      currentQuizQuestions.forEach((q, idx) => {
-        if (!userAnswers.hasOwnProperty(idx)) {
-          skippedCount++;
-        } else if (userAnswers[idx] === q.correctKey) {
-          correctCount++;
-        } else {
-          wrongCount++;
-        }
-      });
-
-      const total = currentQuizQuestions.length;
-      const percentage = Math.round((correctCount / total) * 100);
-
-      document.getElementById('result-score').innerText = `${correctCount} / ${total}`;
-      document.getElementById('result-percentage').innerText = `${percentage}% Trả lời đúng`;
-      document.getElementById('result-correct-count').innerText = correctCount;
-      document.getElementById('result-wrong-count').innerText = wrongCount;
-      document.getElementById('result-skipped-count').innerText = skippedCount;
-
-      const iconBox = document.getElementById('result-icon-box');
-      if (percentage >= 80) {
-        iconBox.className = "w-20 h-20 mx-auto rounded-full flex items-center justify-center text-3xl mb-2 bg-emerald-100 text-emerald-600";
-        document.getElementById('result-title').innerText = "Chúc Mừng! Bạn Đã Đạt Bài Thi";
-      } else {
-        iconBox.className = "w-20 h-20 mx-auto rounded-full flex items-center justify-center text-3xl mb-2 bg-amber-100 text-amber-600";
-        document.getElementById('result-title').innerText = "Cần Cố Gắng Thêm!";
-      }
-
-      renderReviewList();
-      showView('view-result');
-    }
-
-    function renderReviewList() {
-      const container = document.getElementById('review-list-container');
-      container.innerHTML = '';
-
-      currentQuizQuestions.forEach((q, idx) => {
-        const userChoice = userAnswers[idx];
-        const isCorrect = userChoice === q.correctKey;
-
-        const card = document.createElement('div');
-        card.className = `p-5 rounded-2xl border ${isCorrect ? 'bg-emerald-50/20 border-emerald-200' : 'bg-red-50/20 border-red-200'} space-y-3`;
-
-        let headerBadge = isCorrect 
-          ? `<span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-md text-xs font-bold"><i class="fa-solid fa-check mr-1"></i> Đúng</span>`
-          : `<span class="px-2.5 py-1 bg-red-100 text-red-800 rounded-md text-xs font-bold"><i class="fa-solid fa-xmark mr-1"></i> Sai</span>`;
-
-        if (!userChoice) {
-          headerBadge = `<span class="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-bold">Chưa trả lời</span>`;
-        }
-
-        let optionsHTML = '';
-        ['A', 'B', 'C', 'D'].forEach(key => {
-          if (!q.options[key]) return;
-          
-          let optStyle = "p-3 rounded-xl border text-xs flex items-start space-x-2 ";
-          if (key === q.correctKey) {
-            // RED BOLD FOR CORRECT ANSWER
-            optStyle += "bg-red-100 border-red-400 font-black text-red-900 ring-1 ring-red-400";
-          } else if (key === userChoice && !isCorrect) {
-            optStyle += "bg-slate-200 border-slate-400 text-slate-500 line-through opacity-75";
-          } else {
-            optStyle += "bg-white border-slate-200 text-slate-700 opacity-70";
-          }
-
-          optionsHTML += `
-            <div class="${optStyle}">
-              <span class="font-bold shrink-0">${key}.</span>
-              <span>${escapeHTML(q.options[key])}</span>
+                <!-- Mode 3: Professional Exam -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-md hover:shadow-xl transition-all flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-xl flex items-center justify-center text-xl font-bold mb-4">
+                            <i class="fa-solid fa-briefcase"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-800 mb-2">Thi Thử Chuyên Môn</h3>
+                        <p class="text-slate-500 text-xs leading-relaxed mb-4">
+                            Tạo đề thi gồm <strong>40 câu ngẫu nhiên</strong> trích xuất từ danh sách câu hỏi Chuyên môn trong ngân hàng dữ liệu của bạn.
+                        </p>
+                    </div>
+                    <button onclick="startExamPro()" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-3 rounded-xl transition-all text-sm shadow">
+                        Thi Thử Chuyên Môn (40 Phút) <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
             </div>
-          `;
+        </section>
+
+        <!-- VIEW 2: QUIZ / PRACTICE INTERFACE -->
+        <section id="view-quiz" class="hidden space-y-6">
+            <!-- Quiz Info Top Bar -->
+            <div class="bg-white rounded-2xl shadow-md p-4 sm:p-6 border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div>
+                    <span id="quiz-badge-mode" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800">
+                        Chế độ Ôn Tập
+                    </span>
+                    <h2 id="quiz-title" class="text-xl font-bold text-slate-800 mt-2">Danh Sách Câu Hỏi</h2>
+                </div>
+
+                <!-- Timer / Progress -->
+                <div class="flex items-center gap-4">
+                    <div id="timer-box" class="hidden bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 text-amber-700 font-mono text-lg font-bold flex items-center gap-2">
+                        <i class="fa-regular fa-clock text-amber-500"></i>
+                        <span id="timer-text">40:00</span>
+                    </div>
+                    <button onclick="confirmExitQuiz()" class="text-slate-500 hover:text-slate-800 font-medium text-sm px-3 py-2 rounded-lg hover:bg-slate-100 transition-all">
+                        <i class="fa-solid fa-xmark mr-1"></i> Thoát
+                    </button>
+                </div>
+            </div>
+
+            <!-- Question Card -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 border border-slate-200 relative">
+                <!-- Question Header -->
+                <div class="flex justify-between items-start mb-4 border-b border-slate-100 pb-4">
+                    <div>
+                        <span class="text-xs font-bold text-indigo-600 uppercase tracking-wide">
+                            Câu <span id="q-index">1</span>/<span id="q-total">10</span>
+                        </span>
+                        <span id="q-category-tag" class="ml-2 text-xs bg-slate-100 text-slate-600 font-medium px-2.5 py-0.5 rounded-full">
+                            Văn hóa - Phần A
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Question Text -->
+                <h3 id="q-text" class="text-lg sm:text-xl font-semibold text-slate-800 mb-6 leading-relaxed">
+                    Nội dung câu hỏi sẽ hiển thị tại đây?
+                </h3>
+
+                <!-- Options Grid -->
+                <div id="options-container" class="space-y-3 mb-6">
+                    <!-- Options populated via JS -->
+                </div>
+
+                <!-- Immediate Feedback Alert (For Practice Mode) -->
+                <div id="practice-feedback" class="hidden p-4 rounded-xl border mb-6 text-sm">
+                    <!-- Populated via JS -->
+                </div>
+
+                <!-- Navigation Controls -->
+                <div class="flex justify-between items-center pt-4 border-t border-slate-100">
+                    <button id="btn-prev" onclick="prevQuestion()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-5 py-2.5 rounded-xl text-sm transition-all disabled:opacity-40">
+                        <i class="fa-solid fa-chevron-left mr-1"></i> Câu Trước
+                    </button>
+                    
+                    <button id="btn-next" onclick="nextQuestion()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-all shadow-md">
+                        Câu Tiếp <i class="fa-solid fa-chevron-right ml-1"></i>
+                    </button>
+
+                    <button id="btn-submit" onclick="submitExam()" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-all shadow-md">
+                        Nộp Bài <i class="fa-solid fa-check ml-1"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Question Palette Grid -->
+            <div class="bg-white rounded-2xl shadow-md p-6 border border-slate-200">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Danh Sách Câu Hỏi</h4>
+                <div id="question-palette" class="flex flex-wrap gap-2 max-h-40 overflow-y-auto pr-2">
+                    <!-- Palette Buttons generated via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 3: RESULT REPORT -->
+        <section id="view-result" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl shadow-xl p-8 border border-slate-200 text-center max-w-2xl mx-auto">
+                <div class="w-20 h-20 mx-auto rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-3xl mb-4">
+                    <i class="fa-solid fa-award"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800 mb-1">Kết Quả Bài Thi</h2>
+                <p id="result-subtitle" class="text-sm text-slate-500 mb-6">Bạn đã hoàn thành bài thi thử</p>
+
+                <div class="grid grid-cols-3 gap-4 mb-8 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <div>
+                        <p class="text-xs text-slate-400 mb-1">Điểm Số</p>
+                        <p id="res-score" class="text-3xl font-extrabold text-indigo-600">0/40</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 mb-1">Tỷ Lệ</p>
+                        <p id="res-percent" class="text-3xl font-extrabold text-emerald-600">0%</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 mb-1">Thời Gian</p>
+                        <p id="res-time" class="text-3xl font-extrabold text-amber-600">00:00</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-center gap-4">
+                    <button onclick="reviewExam()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-xl text-sm transition-all shadow-md">
+                        <i class="fa-solid fa-eye mr-2"></i>Xem Lại Bài Làm
+                    </button>
+                    <button onclick="goHome()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold px-6 py-3 rounded-xl text-sm transition-all">
+                        <i class="fa-solid fa-house mr-2"></i>Trang Chủ
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Global State
+        let rawQuestions = [];
+        let activeQuestions = [];
+        let userAnswers = {};
+        let currentQuestionIdx = 0;
+        let currentMode = 'practice'; // 'practice', 'exam_culture', 'exam_pro'
+        let timerInterval = null;
+        let timeRemaining = 40 * 60; // 40 minutes in seconds
+
+        // Standardized Header Key Mapping
+        const HEADER_MAP = {
+            category: ['mục', 'muc', 'danh mục', 'category', 'nhóm'],
+            section: ['phần', 'phan', 'section', 'bảng'],
+            question: ['câu hỏi', 'cau hoi', 'câu hỏi?', 'question', 'nội dung'],
+            optA: ['đáp án a', 'dap an a', 'a', 'option a'],
+            optB: ['đáp án b', 'dap an b', 'b', 'option b'],
+            optC: ['đáp án c', 'dap an c', 'c', 'option c'],
+            optD: ['đáp án d', 'dap an d', 'd', 'option d'],
+            key: ['đáp án đúng', 'dap an dung', 'đáp án', 'dap an', 'key', 'answer', 'correct'],
+            explain: ['giải thích', 'giai thich', 'explanation', 'ghi chú']
+        };
+
+        // Utility: Clean String
+        function cleanStr(str) {
+            if (!str) return '';
+            return str.toString().trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        }
+
+        // Parse Excel/CSV Header Row
+        function mapHeaders(headerRow) {
+            const indexMap = {};
+            headerRow.forEach((colName, idx) => {
+                const cleaned = cleanStr(colName);
+                for (const [key, aliases] of Object.entries(HEADER_MAP)) {
+                    if (aliases.includes(cleaned) && indexMap[key] === undefined) {
+                        indexMap[key] = idx;
+                    }
+                }
+            });
+            return indexMap;
+        }
+
+        // Process File Selection
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                    if (jsonData.length < 2) {
+                        alert("File không chứa dữ liệu câu hỏi hợp lệ!");
+                        return;
+                    }
+
+                    parseParsedData(jsonData);
+                } catch (err) {
+                    alert("Lỗi khi đọc file Excel/CSV: " + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Parse Row Array to Standard Question Object
+        function parseParsedData(rows) {
+            const headers = rows[0];
+            const colMap = mapHeaders(headers);
+
+            // Validation check
+            const required = ['question', 'optA', 'optB', 'key'];
+            const missing = required.filter(k => colMap[k] === undefined);
+
+            if (missing.length > 0) {
+                alert(`File thiếu các cột bắt buộc!\nCần có ít nhất: Câu hỏi, Đáp án A, Đáp án B, Đáp án đúng.`);
+                return;
+            }
+
+            const parsedList = [];
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row || row.length === 0 || !row[colMap.question]) continue;
+
+                let rawKey = row[colMap.key] ? row[colMap.key].toString().trim().toUpperCase() : 'A';
+                // Handle numeric keys (1->A, 2->B, etc.)
+                if (rawKey === '1') rawKey = 'A';
+                if (rawKey === '2') rawKey = 'B';
+                if (rawKey === '3') rawKey = 'C';
+                if (rawKey === '4') rawKey = 'D';
+
+                parsedList.push({
+                    id: i,
+                    category: colMap.category !== undefined && row[colMap.category] ? row[colMap.category].toString().trim() : 'Chuyên môn',
+                    section: colMap.section !== undefined && row[colMap.section] ? row[colMap.section].toString().trim().toUpperCase() : '',
+                    question: row[colMap.question].toString().trim(),
+                    optA: colMap.optA !== undefined && row[colMap.optA] ? row[colMap.optA].toString().trim() : '',
+                    optB: colMap.optB !== undefined && row[colMap.optB] ? row[colMap.optB].toString().trim() : '',
+                    optC: colMap.optC !== undefined && row[colMap.optC] ? row[colMap.optC].toString().trim() : '',
+                    optD: colMap.optD !== undefined && row[colMap.optD] ? row[colMap.optD].toString().trim() : '',
+                    key: rawKey,
+                    explain: colMap.explain !== undefined && row[colMap.explain] ? row[colMap.explain].toString().trim() : ''
+                });
+            }
+
+            if (parsedList.length === 0) {
+                alert("Không đọc được câu hỏi nào từ file!");
+                return;
+            }
+
+            rawQuestions = parsedList;
+            updateHeaderStats();
+            document.getElementById('mode-selection').classList.remove('hidden');
+            alert(`Tải thành công ${rawQuestions.length} câu hỏi! Hãy chọn chế độ làm bài bên dưới.`);
+        }
+
+        // Update Header Stats Badges
+        function updateHeaderStats() {
+            const vhCount = rawQuestions.filter(q => cleanStr(q.category).includes('van hoa')).length;
+            const cmCount = rawQuestions.length - vhCount;
+
+            document.getElementById('stat-vh').innerHTML = `<i class="fa-solid fa-book text-xs mr-1"></i>Văn hóa: <b>${vhCount}</b>`;
+            document.getElementById('stat-cm').innerHTML = `<i class="fa-solid fa-briefcase text-xs mr-1"></i>Chuyên môn: <b>${cmCount}</b>`;
+            document.getElementById('stat-total').innerHTML = `<i class="fa-solid fa-layer-group text-xs mr-1"></i>Tổng câu: <b>${rawQuestions.length}</b>`;
+        }
+
+        // Start Practice Mode (All Questions)
+        function startPracticeMode() {
+            currentMode = 'practice';
+            activeQuestions = [...rawQuestions];
+            userAnswers = {};
+            currentQuestionIdx = 0;
+
+            document.getElementById('quiz-badge-mode').className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800";
+            document.getElementById('quiz-badge-mode').innerText = "Chế độ Ôn Tập";
+            document.getElementById('timer-box').classList.add('hidden');
+
+            showView('view-quiz');
+            renderQuestion();
+            renderPalette();
+        }
+
+        // Start Exam: Cultural (14A + 10B + 8C + 8D = 40)
+        function startExamCulture() {
+            currentMode = 'exam_culture';
+            
+            const vhQuestions = rawQuestions.filter(q => cleanStr(q.category).includes('van hoa'));
+            
+            const partA = shuffleArray(vhQuestions.filter(q => q.section === 'A')).slice(0, 14);
+            const partB = shuffleArray(vhQuestions.filter(q => q.section === 'B')).slice(0, 10);
+            const partC = shuffleArray(vhQuestions.filter(q => q.section === 'C')).slice(0, 8);
+            const partD = shuffleArray(vhQuestions.filter(q => q.section === 'D')).slice(0, 8);
+
+            let selected = [...partA, ...partB, ...partC, ...partD];
+
+            // Fill if under 40
+            if (selected.length < 40) {
+                const remaining = vhQuestions.filter(q => !selected.includes(q));
+                selected = selected.concat(shuffleArray(remaining).slice(0, 40 - selected.length));
+            }
+
+            if (selected.length === 0) {
+                alert("Không tìm thấy câu hỏi thuộc mục 'Văn hóa' trong ngân hàng!");
+                return;
+            }
+
+            activeQuestions = selected;
+            userAnswers = {};
+            currentQuestionIdx = 0;
+
+            document.getElementById('quiz-badge-mode').className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-100 text-indigo-800";
+            document.getElementById('quiz-badge-mode').innerText = "Thi Thử Văn Hóa";
+            document.getElementById('timer-box').classList.remove('hidden');
+
+            startTimer(40 * 60);
+            showView('view-quiz');
+            renderQuestion();
+            renderPalette();
+        }
+
+        // Start Exam: Professional (Random 40)
+        function startExamPro() {
+            currentMode = 'exam_pro';
+            const cmQuestions = rawQuestions.filter(q => !cleanStr(q.category).includes('van hoa'));
+            const sourcePool = cmQuestions.length >= 10 ? cmQuestions : rawQuestions;
+
+            activeQuestions = shuffleArray([...sourcePool]).slice(0, 40);
+            userAnswers = {};
+            currentQuestionIdx = 0;
+
+            document.getElementById('quiz-badge-mode').className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-sky-100 text-sky-800";
+            document.getElementById('quiz-badge-mode').innerText = "Thi Thử Chuyên Môn";
+            document.getElementById('timer-box').classList.remove('hidden');
+
+            startTimer(40 * 60);
+            showView('view-quiz');
+            renderQuestion();
+            renderPalette();
+        }
+
+        // Render Current Question
+        function renderQuestion() {
+            const q = activeQuestions[currentQuestionIdx];
+            document.getElementById('q-index').innerText = currentQuestionIdx + 1;
+            document.getElementById('q-total').innerText = activeQuestions.length;
+            document.getElementById('q-category-tag').innerText = `${q.category}${q.section ? ' - Phần ' + q.section : ''}`;
+            document.getElementById('q-text').innerText = q.question;
+
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            const options = [
+                { key: 'A', text: q.optA },
+                { key: 'B', text: q.optB },
+                { key: 'C', text: q.optC },
+                { key: 'D', text: q.optD }
+            ].filter(o => o.text);
+
+            const selectedKey = userAnswers[currentQuestionIdx];
+            const isAnswered = selectedKey !== undefined;
+
+            options.forEach(opt => {
+                const btn = document.createElement('div');
+                let cardClass = "option-card flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all bg-white border-slate-200 hover:border-indigo-300";
+
+                // In practice mode after answering, highlight correct/wrong
+                if (currentMode === 'practice' && isAnswered) {
+                    if (opt.key === q.key) {
+                        // CRITICAL FEATURE: Red bold highlighted correct answer when wrong or right
+                        cardClass = "option-card flex items-center p-4 border-2 rounded-xl correct-highlight shadow-sm";
+                    } else if (selectedKey === opt.key) {
+                        cardClass = "option-card flex items-center p-4 border-2 rounded-xl bg-slate-100 border-slate-300 text-slate-400 line-through";
+                    }
+                } else if (selectedKey === opt.key) {
+                    cardClass = "option-card flex items-center p-4 border-2 rounded-xl bg-indigo-50 border-indigo-600 text-indigo-900 font-medium";
+                }
+
+                btn.className = cardClass;
+                btn.onclick = () => selectOption(opt.key);
+
+                btn.innerHTML = `
+                    <div class="w-8 h-8 rounded-lg border border-current flex items-center justify-center font-bold text-sm mr-3 shrink-0">
+                        ${opt.key}
+                    </div>
+                    <div class="text-sm sm:text-base flex-1">${opt.text}</div>
+                `;
+
+                container.appendChild(btn);
+            });
+
+            // Feedback Box for Practice Mode
+            const feedbackBox = document.getElementById('practice-feedback');
+            if (currentMode === 'practice' && isAnswered) {
+                feedbackBox.classList.remove('hidden');
+                if (selectedKey === q.key) {
+                    feedbackBox.className = "p-4 rounded-xl border bg-emerald-50 border-emerald-200 text-emerald-800 text-sm";
+                    feedbackBox.innerHTML = `<strong><i class="fa-solid fa-circle-check mr-1"></i> Chính xác!</strong> ${q.explain ? '<br>' + q.explain : ''}`;
+                } else {
+                    feedbackBox.className = "p-4 rounded-xl border bg-red-50 border-red-200 text-red-800 text-sm";
+                    feedbackBox.innerHTML = `<strong><i class="fa-solid fa-circle-xmark mr-1"></i> Chưa đúng!</strong> Đáp án đúng là: <strong class="text-red-600 underline">${q.key}</strong>. ${q.explain ? '<br>' + q.explain : ''}`;
+                }
+            } else {
+                feedbackBox.classList.add('hidden');
+            }
+
+            // Button visibility
+            document.getElementById('btn-prev').disabled = currentQuestionIdx === 0;
+            if (currentQuestionIdx === activeQuestions.length - 1) {
+                document.getElementById('btn-next').classList.add('hidden');
+                document.getElementById('btn-submit').classList.remove('hidden');
+            } else {
+                documentChào anh, em rất xin lỗi vì hệ thống tự động ẩn mã nguồn vào giao diện xem trước (Canvas) khiến anh không nhìn thấy đoạn code HTML. 
+
+Dưới đây em gửi toàn bộ mã nguồn file **`index.html`** trực tiếp dạng văn bản (text block). Anh chỉ cần copy toàn bộ đoạn mã trong ô bên dưới rồi dán đè vào file `index.html` trên GitHub nhé!
+
+```html
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Thi & Ôn Tập Trắc Nghiệm Online</title>
+    <!-- Tailwind CSS -->
+    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css)">
+    <!-- SheetJS (XLSX) library -->
+    <script src="[https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js](https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js)"></script>
+    <style>
+        @import url('[https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap)');
+        body { font-family: 'Inter', sans-serif; }
+        .correct-answer-highlight {
+            border: 2px solid #ef4444 !important;
+            background-color: #fef2f2 !important;
+            color: #dc2626 !important;
+            font-weight: 700 !important;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-indigo-700 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="showScreen('home')">
+                <i class="fa-solid fa-graduation-cap text-2xl text-amber-300"></i>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">Hệ Thống Trắc Nghiệm Online</h1>
+                    <p class="text-xs text-indigo-200">Ôn Tập & Thi Thử Chuyên Môn - Văn Hóa Doanh Nghiệp</p>
+                </div>
+            </div>
+            <div id="statsBadge" class="hidden text-xs bg-indigo-800 px-3 py-1.5 rounded-lg border border-indigo-500/30">
+                <span class="mr-2"><i class="fa-solid fa-book text-emerald-400"></i> Văn hóa: <b id="cntVanHoa">0</b></span>
+                <span class="mr-2"><i class="fa-solid fa-briefcase text-sky-400"></i> Chuyên môn: <b id="cntChuyenMon">0</b></span>
+                <span><i class="fa-solid fa-layer-group text-amber-400"></i> Tổng câu: <b id="cntTotal">0</b></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-5xl mx-auto px-4 py-6 flex-grow w-full">
+
+        <!-- 1. HOME / UPLOAD SCREEN -->
+        <section id="screenHome" class="space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 text-center max-w-2xl mx-auto">
+                <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
+                    <i class="fa-solid fa-file-excel"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">Tải Lên Ngân Hàng Câu Hỏi</h2>
+                <p class="text-slate-500 text-sm mb-6">Nạp file danh sách câu hỏi của bạn (.xlsx, .csv) hoặc sử dụng ngân hàng câu hỏi mẫu có sẵn.</p>
+
+                <!-- Dropzone -->
+                <div id="dropzone" class="border-2 border-dashed border-indigo-300 hover:border-indigo-500 bg-indigo-50/50 hover:bg-indigo-50 rounded-xl p-8 transition cursor-pointer mb-6 relative group">
+                    <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                    <i class="fa-solid fa-cloud-arrow-up text-4xl text-indigo-400 group-hover:scale-110 transition-transform mb-3"></i>
+                    <p class="font-semibold text-slate-700">Nhấp để chọn file Excel/CSV hoặc kéo thả vào đây</p>
+                    <p class="text-xs text-slate-400 mt-1">Hỗ trợ các cột: Mục, Phần, Câu hỏi, Đáp án A-D, Đáp án đúng, Giải thích</p>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap gap-3 justify-center">
+                    <button onclick="downloadTemplate()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                        <i class="fa-solid fa-download text-emerald-600"></i> Tải File Mẫu Excel (.xlsx)
+                    </button>
+                    <button onclick="loadSampleData()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition flex items-center gap-2 shadow-md shadow-indigo-200">
+                        <i class="fa-solid fa-bolt"></i> Nạp Câu Hỏi Mẫu (80 Cụm)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mode Selection Screen (Hidden until questions loaded) -->
+            <div id="modeSelection" class="hidden space-y-6">
+                <div class="text-center">
+                    <h3 class="text-xl font-bold text-slate-800">Chọn Chế Độ Học & Thi</h3>
+                    <p class="text-slate-500 text-sm">Vui lòng chọn chế độ phù hợp với nhu cầu của bạn</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Mode 1: Ôn Tập -->
+                    <div onclick="startPracticeMode()" class="bg-white rounded-2xl p-6 border border-slate-200 hover:border-indigo-500 hover:shadow-xl transition cursor-pointer group flex flex-col justify-between">
+                        <div>
+                            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition">
+                                <i class="fa-solid fa-book-open"></i>
+                            </div>
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">Chế Độ Ôn Tập</h4>
+                            <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                                Làm toàn bộ danh sách câu hỏi. Không giới hạn thời gian. Khi làm sai sẽ <span class="text-red-600 font-bold">hiện đáp án đúng đỏ in đậm</span> nổi bật ngay lập tức.
+                            </p>
+                        </div>
+                        <span class="text-xs font-semibold text-emerald-600 flex items-center gap-1">Vào ôn tập <i class="fa-solid fa-arrow-right"></i></span>
+                    </div>
+
+                    <!-- Mode 2: Thi Văn Hóa -->
+                    <div onclick="startExamCultureMode()" class="bg-white rounded-2xl p-6 border border-slate-200 hover:border-indigo-500 hover:shadow-xl transition cursor-pointer group flex flex-col justify-between">
+                        <div>
+                            <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-xl flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition">
+                                <i class="fa-solid fa-landmark"></i>
+                            </div>
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">Thi Thử Văn Hóa</h4>
+                            <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                                Làm 40 câu ngẫu nhiên phân bổ đủ 4 phần: <b>Phần A (14 câu)</b>, <b>Phần B (10 câu)</b>, <b>Phần C (8 câu)</b>, <b>Phần D (8 câu)</b>.
+                            </p>
+                        </div>
+                        <span class="text-xs font-semibold text-sky-600 flex items-center gap-1">Bắt đầu thi <i class="fa-solid fa-arrow-right"></i></span>
+                    </div>
+
+                    <!-- Mode 3: Thi Chuyên Môn -->
+                    <div onclick="startExamSpecialtyMode()" class="bg-white rounded-2xl p-6 border border-slate-200 hover:border-indigo-500 hover:shadow-xl transition cursor-pointer group flex flex-col justify-between">
+                        <div>
+                            <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition">
+                                <i class="fa-solid fa-briefcase"></i>
+                            </div>
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">Thi Thử Chuyên Môn</h4>
+                            <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                                Làm 40 câu hỏi được bốc ngẫu nhiên hoàn toàn từ danh sách câu hỏi Chuyên môn trong ngân hàng đề.
+                            </p>
+                        </div>
+                        <span class="text-xs font-semibold text-purple-600 flex items-center gap-1">Bắt đầu thi <i class="fa-solid fa-arrow-right"></i></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. QUIZ / EXAM SCREEN -->
+        <section id="screenQuiz" class="hidden space-y-6">
+            <!-- Quiz Toolbar -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-wrap justify-between items-center gap-4">
+                <div class="flex items-center space-x-3">
+                    <button onclick="confirmExit()" class="text-slate-400 hover:text-slate-600 text-sm font-medium flex items-center gap-1">
+                        <i class="fa-solid fa-chevron-left"></i> Thoát
+                    </button>
+                    <span class="text-slate-300">|</span>
+                    <span id="quizTitle" class="font-bold text-slate-700 text-sm sm:text-base">Chế độ Thi</span>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div id="timerContainer" class="hidden flex items-center space-x-2 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg border border-amber-200 font-mono font-bold text-sm">
+                        <i class="fa-regular fa-clock"></i>
+                        <span id="timerText">40:00</span>
+                    </div>
+                    <button id="btnSubmitExam" onclick="submitExam()" class="hidden px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium shadow transition">
+                        <i class="fa-solid fa-paper-plane mr-1"></i> Nộp Bài
+                    </button>
+                </div>
+            </div>
+
+            <!-- Question Card -->
+            <div id="questionContainer" class="space-y-6"></div>
+
+            <!-- Question Navigation Grid / Pagination -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Danh Sách Câu Hỏi</span>
+                    <span id="progressText" class="text-xs text-slate-500 font-medium">Đã làm: 0/0</span>
+                </div>
+                <div id="quizNavGrid" class="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-1"></div>
+            </div>
+        </section>
+
+        <!-- 3. RESULT SCREEN -->
+        <section id="screenResult" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center max-w-xl mx-auto">
+                <div id="resultIcon" class="w-20 h-20 rounded-full flex items-center justify-center text-3xl mx-auto mb-4"></div>
+                <h2 id="resultTitle" class="text-2xl font-bold mb-1">Kết Quả Thi Thử</h2>
+                <p id="resultSubtitle" class="text-slate-500 text-sm mb-6"></p>
+
+                <div class="grid grid-cols-3 gap-4 mb-8 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <div>
+                        <p class="text-xs text-slate-400">Điểm số</p>
+                        <p id="resScore" class="text-2xl font-black text-indigo-600">0/10</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400">Số câu đúng</p>
+                        <p id="resCorrect" class="text-2xl font-black text-emerald-600">0</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400">Tổng số câu</p>
+                        <p id="resTotal" class="text-2xl font-black text-slate-700">0</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-center gap-4">
+                    <button onclick="showScreen('home')" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition">
+                        <i class="fa-solid fa-house mr-1"></i> Trang Chủ
+                    </button>
+                    <button id="btnReviewExam" onclick="reviewExamAnswers()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition shadow-md shadow-indigo-200">
+                        <i class="fa-solid fa-magnifying-glass mr-1"></i> Xem Lại Đáp Án
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400">
+        <p>Hệ Thống Luyện Thi Trắc Nghiệm Online &copy; 2026. Hỗ trợ chạy trên GitHub Pages miễn phí.</p>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // State Management
+        let rawQuestions = [];
+        let currentQuizQuestions = [];
+        let userAnswers = {};
+        let currentMode = ''; // 'PRACTICE', 'EXAM_CULTURE', 'EXAM_SPECIALTY'
+        let timerInterval = null;
+        let timeLeft = 2400; // 40 minutes
+
+        // Intelligent Header Normalization Helper
+        function cleanStr(str) {
+            if (!str) return '';
+            return str.toString().toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-z0-9]/g, '');
+        }
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            setupFileUpload();
         });
 
-        card.innerHTML = `
-          <div class="flex justify-between items-center">
-            <span class="text-xs font-bold text-slate-500">Câu ${idx + 1} (${q.category}${q.part ? ' - ' + q.part : ''})</span>
-            ${headerBadge}
-          </div>
-          <h4 class="text-sm font-bold text-slate-900">${q.question}</h4>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
-            ${optionsHTML}
-          </div>
-          ${q.explanation ? `<p class="text-xs text-slate-600 bg-white p-3 rounded-lg border border-slate-200 mt-2"><strong>Giải thích:</strong> ${escapeHTML(q.explanation)}</p>` : ''}
-        `;
+        // Setup File Upload Logic
+        function setupFileUpload() {
+            const fileInput = document.getElementById('fileInput');
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    processFile(e.target.files[0]);
+                }
+            });
+        }
 
-        container.appendChild(card);
-      });
-    }
+        // Process Uploaded Excel/CSV File
+        function processFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-    function confirmExitQuiz() {
-      if (confirm("Bạn có chắc chắn muốn thoát? Dữ liệu bài thi đang làm sẽ không được lưu.")) {
-        clearInterval(timerInterval);
-        showView('view-upload');
-      }
-    }
+                    if (jsonData.length < 2) {
+                        alert("File không có dữ liệu!");
+                        return;
+                    }
 
-    function shuffleArray(array) {
-      const arr = [...array];
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-      }
-      return arr;
-    }
+                    parseParsedRows(jsonData);
+                } catch (err) {
+                    alert("Không thể đọc file Excel/CSV! Vui lòng kiểm tra lại định dạng file.");
+                    console.error(err);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
 
-    function escapeHTML(str) {
-      if (!str) return '';
-      return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-  </script>
+        // Parse Standard Rows into Question Objects
+        function parseParsedRows(rows) {
+            const headers = rows[0].map(h => cleanStr(h));
+            
+            // Map columns dynamically
+            const idxCategory = headers.findIndex(h => h.includes('muc') || h.includes('category'));
+            const idxPart = headers.findIndex(h => h.includes('phan') || h.includes('part') || h.includes('section'));
+            const idxQuestion = headers.findIndex(h => h.includes('cauhoi') || h.includes('question') || h.includes('noidung'));
+            const idxOptA = headers.findIndex(h => h.includes('dapana') || h === 'a' || h.includes('opta'));
+            const idxOptB = headers.findIndex(h => h.includes('dapanb') || h === 'b' || h.includes('optb'));
+            const idxOptC = headers.findIndex(h => h.includes('dapanc') || h === 'c' || h.includes('optc'));
+            const idxOptD = headers.findIndex(h => h.includes('dapand') || h === 'd' || h.includes('optd'));
+            const idxKey = headers.findIndex(h => h.includes('dapandung') || h.includes('key') || h.includes('answer') || h.includes('dapan'));
+            const idxExp = headers.findIndex(h => h.includes('giaithich') || h.includes('explain'));
+
+            if (idxQuestion === -1 || idxOptA === -1 || idxOptB === -1 || idxKey === -1) {
+                alert("File thiếu các cột chuẩn bắt buộc!\nVui lòng đảm bảo file có tiêu đề: Câu hỏi, Đáp án A, Đáp án B, Đáp án đúng.");
+                return;
+            }
+
+            const parsed = [];
+            for (let i = 1; i < rows.length; i++) {
+                const r = rows[i];
+                if (!r || !r[idxQuestion]) continue;
+
+                let keyRaw = (r[idxKey] || '').toString().trim().toUpperCase();
+                let keyFinal = 'A';
+                if (keyRaw.includes('B') || keyRaw === '2') keyFinal = 'B';
+                else if (keyRaw.includes('C') || keyRaw === '3') keyFinal = 'C';
+                else if (keyRaw.includes('D') || keyRaw === '4') keyFinal = 'D';
+
+                let category = (idxCategory !== -1 && r[idxCategory]) ? r[idxCategory].toString().trim() : 'Chuyên môn';
+                let part = (idxPart !== -1 && r[idxPart]) ? r[idxPart].toString().trim().toUpperCase() : 'A';
+
+                parsed.push({
+                    id: i,
+                    category: category,
+                    part: part,
+                    question: r[idxQuestion].toString().trim(),
+                    options: {
+                        A: r[idxOptA] ? r[idxOptA].toString().trim() : '',
+                        B: r[idxOptB] ? r[idxOptB].toString().trim() : '',
+                        C: (idxOptC !== -1 && r[idxOptC]) ? r[idxOptC].toString().trim() : '',
+                        D: (idxOptD !== -1 && r[idxOptD]) ? r[idxOptD].toString().trim() : ''
+                    },
+                    key: keyFinal,
+                    explain: (idxExp !== -1 && r[idxExp]) ? r[idxExp].toString().trim() : ''
+                });
+            }
+
+            if (parsed.length === 0) {
+                alert("Không tìm thấy câu hỏi hợp lệ nào trong file!");
+                return;
+            }
+
+            rawQuestions = parsed;
+            updateStatsBadge();
+            document.getElementById('modeSelection').classList.remove('hidden');
+            alert(`Đã nạp thành công ${parsed.length} câu hỏi!`);
+        }
+
+        // Update Questions Statistics Badge
+        function updateStatsBadge() {
+            const vanHoa = rawQuestions.filter(q => cleanStr(q.category).includes('vanhoa')).length;
+            const chuyenMon = rawQuestions.length - vanHoa;
+
+            document.getElementById('cntVanHoa').textContent = vanHoa;
+            document.getElementById('cntChuyenMon').textContent = chuyenMon;
+            document.getElementById('cntTotal').textContent = rawQuestions.length;
+            document.getElementById('statsBadge').classList.remove('hidden');
+        }
+
+        // Built-in Sample Generator
+        function loadSampleData() {
+            const samples = [];
+            
+            // 40 Culture Questions across Parts A, B, C, D
+            const parts = ['A', 'B', 'C', 'D'];
+            const partCounts = { A: 14, B: 10, C: 8, D: 8 };
+
+            parts.forEach(p => {
+                for (let i = 1; i <= partCounts[p]; i++) {
+                    samples.push({
+                        id: samples.length + 1,
+                        category: 'Văn hóa',
+                        part: p,
+                        question: `[Văn hóa - Phần ${p}] Câu hỏi mẫu số ${i}: Nguyên tắc làm việc cốt lõi của doanh nghiệp là gì?`,
+                        options: {
+                            A: 'Đoàn kết, kỷ luật, đổi mới sáng tạo và hiệu quả',
+                            B: 'Làm việc độc lập không cần phối hợp',
+                            C: 'Chỉ tập trung vào lợi ích ngắn hạn',
+                            D: 'Bỏ qua các quy trình an toàn lao động'
+                        },
+                        key: 'A',
+                        explain: 'Giá trị cốt lõi luôn đặt tính kỷ luật, sáng tạo và tinh thần đồng đội lên hàng đầu.'
+                    });
+                }
+            });
+
+            // 40 Specialty Questions
+            for (let i = 1; i <= 40; i++) {
+                samples.push({
+                    id: samples.length + 1,
+                    category: 'Chuyên môn',
+                    part: 'A',
+                    question: `[Chuyên môn] Câu hỏi số ${i}: Quy trình xử lý nghiệp vụ tiêu chuẩn gồm bao nhiêu bước kiểm soát?`,
+                    options: {
+                        A: '1 bước kiểm tra đơn giản',
+                        B: '3 bước: Đánh giá, Thực thi và Kiểm tra độc lập',
+                        C: 'Không cần kiểm soát',
+                        D: '5 bước ngẫu nhiên không cố định'
+                    },
+                    key: 'B',
+                    explain: 'Quy trình chuẩn bao gồm 3 bước độc lập để giảm thiểu rủi ro vận hành.'
+                });
+            }
+
+            rawQuestions = samples;
+            updateStatsBadge();
+            document.getElementById('modeSelection').classList.remove('hidden');
+            alert('Đã nạp thành công 80 câu hỏi mẫu (40 Văn hóa + 40 Chuyên môn)!');
+        }
+
+        // Mode 1: Practice Mode
+        function startPracticeMode() {
+            currentMode = 'PRACTICE';
+            currentQuizQuestions = [...rawQuestions];
+            userAnswers = {};
+            
+            document.getElementById('quizTitle').textContent = 'Chế Độ Ôn Tập (Hiện Đáp Án Đúng Khi Sai)';
+            document.getElementById('timerContainer').classList.add('hidden');
+            document.getElementById('btnSubmitExam').classList.add('hidden');
+
+            showScreen('quiz');
+            renderQuiz();
+        }
+
+        // Mode 2: Exam Culture Mode (14A, 10B, 8C, 8D)
+        function startExamCultureMode() {
+            const cultureQs = rawQuestions.filter(q => cleanStr(q.category).includes('vanhoa'));
+            
+            const partA = shuffleArray(cultureQs.filter(q => q.part === 'A')).slice(0, 14);
+            const partB = shuffleArray(cultureQs.filter(q => q.part === 'B')).slice(0, 10);
+            const partC = shuffleArray(cultureQs.filter(q => q.part === 'C')).slice(0, 8);
+            const partD = shuffleArray(cultureQs.filter(q => q.part === 'D')).slice(0, 8);
+
+            const selected = [...partA, ...partB, ...partC, ...partD];
+
+            if (selected.length < 40) {
+                if (!confirm(`Hiện chỉ tìm thấy ${selected.length}/40 câu hỏi Văn hóa đúng tiêu chuẩn cấu trúc. Bạn vẫn muốn tiếp tục thi?`)) {
+                    return;
+                }
+            }
+
+            currentMode = 'EXAM_CULTURE';
+            currentQuizQuestions = selected;
+            userAnswers = {};
+
+            document.getElementById('quizTitle').textContent = 'Thi Thử Văn Hóa Doanh Nghiệp (40 Câu - 40 Phút)';
+            setupTimer();
+            showScreen('quiz');
+            renderQuiz();
+        }
+
+        // Mode 3: Exam Specialty Mode (40 random specialty)
+        function startExamSpecialtyMode() {
+            const specQs = rawQuestions.filter(q => !cleanStr(q.category).includes('vanhoa'));
+            const selected = shuffleArray(specQs).slice(0, 40);
+
+            if (selected.length === 0) {
+                alert("Không tìm thấy câu hỏi Chuyên môn nào trong ngân hàng!");
+                return;
+            }
+
+            currentMode = 'EXAM_SPECIALTY';
+            currentQuizQuestions = selected;
+            userAnswers = {};
+
+            document.getElementById('quizTitle').textContent = 'Thi Thử Chuyên Môn (40 Câu - 40 Phút)';
+            setupTimer();
+            showScreen('quiz');
+            renderQuiz();
+        }
+
+        // Render Questions Card List
+        function renderQuiz() {
+            const container = document.getElementById('questionContainer');
+            container.innerHTML = '';
+
+            currentQuizQuestions.forEach((q, idx) => {
+                const card = document.createElement('div');
+                card.id = `qCard_${idx}`;
+                card.className = 'bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4';
+
+                const optKeys = ['A', 'B', 'C', 'D'];
+                let optionsHtml = '';
+
+                optKeys.forEach(k => {
+                    if (!q.options[k]) return;
+                    optionsHtml += `
+                        <label id="lbl_${idx}_${k}" onclick="handleSelectAnswer(${idx}, '${k}')" 
+                            class="flex items-start p-3.5 rounded-xl border border-slate-200 hover:border-indigo-300 hover:bg-slate-50 cursor-pointer transition text-sm text-slate-700">
+                            <input type="radio" name="q_${idx}" value="${k}" class="mt-0.5 mr-3 text-indigo-600 focus:ring-indigo-500">
+                            <span class="font-bold mr-2 text-slate-500">${k}.</span>
+                            <span class="flex-grow">${escapeHtml(q.options[k])}</span>
+                        </label>
+                    `;
+                });
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between text-xs text-slate-400 border-b border-slate-100 pb-3">
+                        <span class="font-semibold text-indigo-600">Câu ${idx + 1} / ${currentQuizQuestions.length}</span>
+                        <span class="bg-slate-100 px-2 py-1 rounded">${q.category} ${q.part ? '- Phần ' + q.part : ''}</span>
+                    </div>
+                    <h3 class="text-base font-semibold text-slate-800 leading-relaxed">${escapeHtml(q.question)}</h3>
+                    <div class="space-y-2.5 pt-2">${optionsHtml}</div>
+                    <div id="explain_${idx}" class="hidden p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 mt-3">
+                        <p class="font-bold mb-1"><i class="fa-solid fa-lightbulb text-amber-500 mr-1"></i> Giải thích đáp án:</p>
+                        <p>${escapeHtml(q.explain || 'Không có giải thích chi tiết.')}</p>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            renderQuizNav();
+            updateProgressText();
+        }
+
+        // Handle User Option Selection
+        function handleSelectAnswer(qIdx, selectedKey) {
+            if (currentMode !== 'PRACTICE' && userAnswers.hasOwnProperty(qIdx) && document.getElementById('screenResult').classList.contains('hidden') === false) {
+                return; // Prevent changing if reviewing results
+            }
+
+            userAnswers[qIdx] = selectedKey;
+            const q = currentQuizQuestions[qIdx];
+
+            // In Practice Mode: Immediately highlight errors with RED BOLD TEXT
+            if (currentMode === 'PRACTICE') {
+                const optKeys = ['A', 'B', 'C', 'D'];
+                optKeys.forEach(k => {
+                    const lbl = document.getElementById(`lbl_${qIdx}_${k}`);
+                    if (lbl) {
+                        lbl.classList.remove('correct-answer-highlight', 'border-red-500', 'bg-red-50', 'text-red-700', 'border-emerald-500', 'bg-emerald-50');
+                    }
+                });
+
+                if (selectedKey !== q.key) {
+                    // Highlight the correct key prominently in RED BOLD
+                    const correctLbl = document.getElementById(`lbl_${qIdx}_${q.key}`);
+                    if (correctLbl) {
+                        correctLbl.classList.add('correct-answer-highlight');
+                    }
+                }
+
+                // Show Explanation
+                const expBox = document.getElementById(`explain_${qIdx}`);
+                if (expBox) expBox.classList.remove('hidden');
+            }
+
+            updateNavGridItem(qIdx);
+            updateProgressText();
+        }
+
+        // Render Navigation Grid
+        function renderQuizNav() {
+            const grid = document.getElementById('quizNavGrid');
+            grid.innerHTML = '';
+
+            currentQuizQuestions.forEach((_, idx) => {
+                const btn = document.createElement('button');
+                btn.id = `navBtn_${idx}`;
+                btn.onclick = () => {
+                    document.getElementById(`qCard_${idx}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
+                };
+                btn.className = 'w-9 h-9 rounded-lg text-xs font-bold border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition';
+                btn.textContent = idx + 1;
+                grid.appendChild(btn);
+            });
+        }
+
+        function updateNavGridItem(idx) {
+            const btn = document.getElementById(`navBtn_${idx}`);
+            if (btn) {
+                btn.className = 'w-9 h-9 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-sm';
+            }
+        }
+
+        function updateProgressText() {
+            const answeredCount = Object.keys(userAnswers).length;
+            document.getElementById('progressText').textContent = `Đã làm: ${answeredCount}/${currentQuizQuestions.length}`;
+        }
+
+        // Timer Logic for Exam Modes
+        function setupTimer() {
+            timeLeft = 2400; // 40 mins
+            document.getElementById('timerContainer').classList.remove('hidden');
+            document.getElementById('btnSubmitExam').classList.remove('hidden');
+            
+            clearInterval(timerInterval);
+            updateTimerDisplay();
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    alert("Đã hết thời gian làm bài thi!");
+                    submitExam();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(timeLeft / 60);
+            const secs = timeLeft % 60;
+            document.getElementById('timerText').textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Submit Exam
+        function submitExam() {
+            clearInterval(timerInterval);
+
+            let correct = 0;
+            currentQuizQuestions.forEach((q, idx) => {
+                if (userAnswers[idx] === q.key) {
+                    correct++;
+                }
+            });
+
+            const total = currentQuizQuestions.length;
+            const score10 = ((correct / total) * 10).toFixed(1);
+
+            document.getElementById('resScore').textContent = `${score10}/10`;
+            document.getElementById('resCorrect').textContent = correct;
+            document.getElementById('resTotal').textContent = total;
+
+            const icon = document.getElementById('resultIcon');
+            const title = document.getElementById('resultTitle');
+            const subtitle = document.getElementById('resultSubtitle');
+
+            if (score10 >= 8.0) {
+                icon.className = 'w-20 h-20 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mx-auto mb-4';
+                icon.innerHTML = '<i class="fa-solid fa-trophy"></i>';
+                title.textContent = 'Xuất Sắc! Hoàn Thành Bài Thi';
+                subtitle.textContent = 'Bạn đã nắm rất vững kiến thức!';
+            } else if (score10 >= 5.0) {
+                icon.className = 'w-20 h-20 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center text-3xl mx-auto mb-4';
+                icon.innerHTML = '<i class="fa-solid fa-thumbs-up"></i>';
+                title.textContent = 'Đạt Bắt Buộc';
+                subtitle.textContent = 'Hãy tiếp tục ôn tập để đạt điểm cao hơn nhé.';
+            } else {
+                icon.className = 'w-20 h-20 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-3xl mx-auto mb-4';
+                icon.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+                title.textContent = 'Chưa Đạt';
+                subtitle.textContent = 'Bạn nên ôn tập lại lý thuyết trước khi thử sức lại.';
+            }
+
+            showScreen('result');
+        }
+
+        // Review Exam Answers after submission
+        function reviewExamAnswers() {
+            showScreen('quiz');
+            document.getElementById('btnSubmitExam').classList.add('hidden');
+            document.getElementById('timerContainer').classList.add('hidden');
+
+            currentQuizQuestions.forEach((q, idx) => {
+                const userAns = userAnswers[idx];
+                const optKeys = ['A', 'B', 'C', 'D'];
+
+                optKeys.forEach(k => {
+                    const lbl = document.getElementById(`lbl_${idx}_${k}`);
+                    if (!lbl) return;
+
+                    // Disable inputs
+                    const input = lbl.querySelector('input');
+                    if (input) input.disabled = true;
+
+                    if (k === q.key) {
+                        // Highlight Correct Key in RED BOLD as requested
+                        lbl.classList.add('correct-answer-highlight');
+                    } else if (userAns === k && userAns !== q.key) {
+                        lbl.classList.add('border-slate-300', 'bg-slate-100', 'line-through', 'text-slate-400');
+                    }
+                });
+
+                const expBox = document.getElementById(`explain_${idx}`);
+                if (expBox) expBox.classList.remove('hidden');
+            });
+        }
+
+        // Screen Navigation Helper
+        function showScreen(screenName) {
+            document.getElementById('screenHome').classList.add('hidden');
+            document.getElementById('screenQuiz').classList.add('hidden');
+            document.getElementById('screenResult').classList.add('hidden');
+
+            if (screenName === 'home') document.getElementById('screenHome').classList.remove('hidden');
+            if (screenName === 'quiz') document.getElementById('screenQuiz').classList.remove('hidden');
+            if (screenName === 'result') document.getElementById('screenResult').classList.remove('hidden');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function confirmExit() {
+            if (confirm("Bạn có chắc chắn muốn thoát lượt học/thi này?")) {
+                clearInterval(timerInterval);
+                showScreen('home');
+            }
+        }
+
+        // Download Standard Excel Template directly via Blob
+        function downloadTemplate() {
+            const templateData = [
+                ["Mục", "Phần", "Câu hỏi", "Đáp án A", "Đáp án B", "Đáp án C", "Đáp án D", "Đáp án đúng", "Giải thích"],
+                ["Văn hóa", "A", "Tên đầy đủ của công ty là gì?", "Công ty A", "Công ty B", "Công ty C", "Công ty D", "A", "Xem điều lệ công ty"],
+                ["Văn hóa", "B", "Giá trị cốt lõi đầu tiên là gì?", "Đoàn kết", "Sáng tạo", "Trung thực", "Tự do", "A", ""],
+                ["Chuyên môn", "", "Quy trình làm việc chuẩn gồm mấy bước?", "1 bước", "3 bước", "5 bước", "7 bước", "B", "Tham khảo SOP-2026"]
+            ];
+
+            const ws = XLSX.utils.aoa_to_sheet(templateData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Mau_Cau_Hoi");
+            
+            XLSX.writeFile(wb, "File_Mau_Cau_Hoi_Trac_Nghiem.xlsx");
+        }
+
+        // Utility Functions
+        function shuffleArray(arr) {
+            const copy = [...arr];
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+    </script>
 </body>
 </html>
