@@ -1,273 +1,343 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Thi & Ôn Luyện Trắc Nghiệm 2026</title>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <style>
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 900px; background: #fff; margin: auto; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-        h2 { text-align: center; color: #1a73e8; margin-bottom: 25px; }
-        
-        .setup-card { background: #f8f9fa; border: 1px solid #e9ecef; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-weight: bold; margin-bottom: 8px; color: #495057; }
-        .form-control { width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 15px; }
-        
-        .upload-section { text-align: center; border: 2px dashed #1a73e8; padding: 30px; border-radius: 8px; background: #e8f0fe; margin-top: 15px; cursor: pointer; }
-        input[type="file"] { display: none; }
-        
-        .btn { background: #1a73e8; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.2s; }
-        .btn:hover { background: #1557b0; }
-        
-        .quiz-section { display: none; }
-        .header-bar { display: flex; justify-content: space-between; align-items: center; background: #e8f0fe; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; }
-        .timer { font-size: 18px; font-weight: bold; color: #d93025; }
-        
-        .question-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
-        .question-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; line-height: 1.4; }
-        .option-label { display: block; padding: 10px 15px; border: 1px solid #dee2e6; border-radius: 6px; margin-bottom: 8px; cursor: pointer; transition: 0.2s; }
-        .option-label:hover { background: #f1f3f4; }
-        
-        /* Hiển thị kết quả ôn luyện */
-        .correct-ans { background-color: #d4edda !important; border-color: #c3e6cb !important; color: #155724; font-weight: bold; }
-        .wrong-ans { background-color: #f8d7da !important; border-color: #f5c6cb !important; color: #721c24; }
-        .explanation { display: none; margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 6px; font-size: 14px; color: #856404; }
-
-        .result-box { display: none; text-align: center; padding: 30px; background: #e6f4ea; border-radius: 8px; margin-top: 20px; }
-        .result-score { font-size: 28px; font-weight: bold; color: #137333; margin-bottom: 10px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thi thử trắc nghiệm</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,Arial,sans-serif;background:#f1f5f9;color:#1e293b}
+  .wrap{max-width:820px;margin:0 auto;padding:16px}
+  h1{font-size:22px;text-align:center} h2{font-size:18px}
+  .card{background:#fff;border-radius:12px;padding:16px;margin:12px 0;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+  button{font:inherit;cursor:pointer;border:0;border-radius:8px;padding:10px 16px;background:#2563eb;color:#fff}
+  button.sec{background:#e2e8f0;color:#1e293b}
+  button.danger{background:#dc2626}
+  button:disabled{opacity:.5;cursor:default}
+  .menu button{display:block;width:100%;margin:8px 0;text-align:left;padding:14px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .spacer{flex:1}
+  .opt{display:block;width:100%;text-align:left;background:#fff;color:#1e293b;border:2px solid #cbd5e1;margin:8px 0;padding:12px}
+  .opt.sel{border-color:#2563eb;background:#eff6ff}
+  .opt.ok{border-color:#16a34a;background:#dcfce7}
+  .opt.bad{border-color:#dc2626;background:#fee2e2}
+  .grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .grid button{width:38px;height:38px;padding:0;background:#e2e8f0;color:#1e293b}
+  .grid button.done{background:#93c5fd}
+  .grid button.cur{outline:3px solid #1d4ed8}
+  .grid button.ok{background:#86efac}.grid button.bad{background:#fca5a5}
+  .timer{font-weight:bold;font-size:18px;color:#dc2626}
+  .quota label{display:flex;justify-content:space-between;align-items:center;margin:6px 0}
+  .quota input{width:80px;padding:6px;font:inherit}
+  .muted{color:#64748b;font-size:14px}
+  .score{font-size:32px;font-weight:bold;text-align:center;color:#2563eb}
+  .score10{font-size:20px;text-align:center;margin:4px 0}
+  .hist{border-bottom:1px solid #e2e8f0;padding:10px 0}
+  .hist:last-child{border:0}
+  .chk{display:flex;gap:8px;align-items:center;margin:10px 0;cursor:pointer}
+  .chk input{width:18px;height:18px}
+</style>
 </head>
 <body>
-
-<div class="container">
-    <h2>HỆ THỐNG THI & ÔN LUYỆN TRẮC NGHIỆM 2026</h2>
-
-    <!-- CẤU HÌNH BÀI THI / ÔN LUYỆN -->
-    <div id="setup-box">
-        <div class="setup-card">
-            <div class="form-group">
-                <label for="category">1. Chọn Phân Loại Nội Dung:</label>
-                <select id="category" class="form-control">
-                    <option value="tat_ca">-- Tất cả nội dung --</option>
-                    <option value="chuyen_mon">Kiến thức Chuyên Môn</option>
-                    <option value="van_hoa">Kiến thức Văn Hóa</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="mode">2. Chọn Chế Độ:</label>
-                <select id="mode" class="form-control">
-                    <option value="on_luyen">Chế độ Ôn Luyện (Hiển thị đáp án ngay)</option>
-                    <option value="thi_thu">Chế độ Thi Thử (Tính thời gian & Chấm điểm)</option>
-                </select>
-            </div>
-
-            <div class="upload-section" onclick="document.getElementById('file-input').click()">
-                <p style="margin: 0; font-weight: 500; font-size: 16px;">Tải lên File Đề Thi Excel (.xlsx, .xls)</p>
-                <p style="margin-top: 5px; color: #5f6368; font-size: 13px;">Nhấp vào đây để chọn file từ máy tính</p>
-                <label class="btn" style="margin-top: 10px; inline-block;">Chọn File Đề Thi</label>
-                <input type="file" id="file-input" accept=".xlsx, .xls">
-            </div>
-        </div>
-    </div>
-
-    <!-- KHU VỰC BÀI THI / ÔN LUYỆN -->
-    <div id="quiz-box" class="quiz-section">
-        <div class="header-bar">
-            <div>
-                <strong id="display-info">Đang tải...</strong>
-            </div>
-            <div class="timer" id="timer">--:--</div>
-        </div>
-
-        <div id="questions-container"></div>
-
-        <button id="submit-btn" class="btn" style="background:#34a853; width:100%; margin-top:20px;" onclick="submitQuiz()">Nộp Bài Thi</button>
-    </div>
-
-    <!-- KHU VỰC KẾT QUẢ -->
-    <div id="result-box" class="result-box">
-        <div class="result-score" id="result-score">0 / 0</div>
-        <p id="result-text" style="font-size: 16px; color: #3c4043;"></p>
-        <button class="btn" onclick="location.reload()" style="margin-top: 15px;">Làm Bài Khác</button>
-    </div>
+<div class="wrap">
+  <h1>📝 Ôn luyện &amp; Thi thử</h1>
+  <div id="app"></div>
 </div>
 
 <script>
-    let allQuestions = [];
-    let filteredQuestions = [];
-    let currentMode = 'on_luyen';
-    let timerInterval;
+/* ================= CẤU HÌNH ================= */
+// Liệt kê tên file Excel ở đây.
+// Nếu để trống [], web sẽ tự dò các file .xlsx trong repo qua GitHub API (chỉ chạy khi host trên github.io).
+const FILES = [
+  // "QLCP mảng xây dựng.xlsx",
+  // "thi b.xlsx",
+];
+const EXAM_MINUTES = 60;
+const TOTAL = 40;
+const DEFAULT_QUOTA = {nq:14, nv:10, kt:8, qd:8};
+const QUOTA_LABEL = {nq:"Nghị quyết", nv:"Nhiệm vụ", kt:"Kiến thức chung", qd:"Quy định, quy chế"};
+const HISTORY_KEY = "thi_history_v1";
+const SHUFFLE_KEY = "thi_shuffle_opts";
+const HISTORY_MAX = 100;
+/* ============================================ */
 
-    document.getElementById('file-input').addEventListener('change', function(e) {
-        let file = e.target.files[0];
-        if (!file) return;
+const $app = document.getElementById('app');
+let data = [];
+let fileName = "";
+let session = null;
+let timerId = null;
+let shuffleOpts = localStorage.getItem(SHUFFLE_KEY) !== "0";   // mặc định BẬT
 
-        let reader = new FileReader();
-        reader.onload = function(e) {
-            let data = new Uint8Array(e.target.result);
-            let workbook = XLSX.read(data, {type: 'array'});
-            let firstSheet = workbook.SheetNames[0];
-            allQuestions = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const shuffle = a => { a = [...a]; for (let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const catKey = s => {
+  s = String(s||"").toLowerCase().trim();
+  if (s.includes("nghị quyết")) return "nq";
+  if (s.includes("nhiệm vụ")) return "nv";
+  if (s.includes("kiến thức")) return "kt";
+  if (s.includes("quy định") || s.includes("quy chế")) return "qd";
+  if (s.includes("chuyên môn")) return "cm";
+  return "other:" + s;
+};
+const CULTURE = ["nq","nv","kt","qd"];
+const fmtScore = n => (Math.round(n*100)/100).toString().replace('.', ',');
+const fmtTime = sec => `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
 
-            if (allQuestions.length > 0) {
-                initQuiz();
-            } else {
-                alert('File Excel không có dữ liệu!');
-            }
-        };
-        reader.readAsArrayBuffer(file);
+/* ---------- Lịch sử (localStorage) ---------- */
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; } catch (e) { return []; }
+}
+function saveHistory(entry) {
+  try {
+    const h = getHistory(); h.unshift(entry);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(0, HISTORY_MAX)));
+  } catch (e) {}
+}
+function historyScreen() {
+  clearInterval(timerId); session = null;
+  const h = getHistory();
+  let html = `<div class="card"><h2>📜 Lịch sử thi thử</h2>`;
+  if (!h.length) html += `<p class="muted">Chưa có bài thi nào được lưu.</p>`;
+  else {
+    const avg = h.reduce((t, x) => t + x.score10, 0) / h.length;
+    html += `<p class="muted">${h.length} bài • điểm trung bình ${fmtScore(avg)}/10</p>`;
+    h.forEach(x => {
+      html += `<div class="hist">
+        <b>${esc(x.exam)}</b> – ${esc(x.label)}<br>
+        <span class="muted">${esc(new Date(x.date).toLocaleString('vi-VN'))} • thời gian ${fmtTime(x.used)}</span><br>
+        Đúng ${x.right}/${x.total} • Sai ${x.wrong} • Bỏ trống ${x.blank} • <b>${fmtScore(x.score10)}/10</b>
+      </div>`;
     });
+  }
+  html += `<div class="row" style="margin-top:12px">
+    <button class="sec" onclick="home()">← Quay lại</button>
+    <span class="spacer"></span>
+    ${h.length ? `<button class="danger" onclick="clearHistory()">Xóa lịch sử</button>` : ""}
+  </div></div>`;
+  $app.innerHTML = html;
+}
+function clearHistory() {
+  if (confirm("Xóa toàn bộ lịch sử?")) { localStorage.removeItem(HISTORY_KEY); historyScreen(); }
+}
 
-    function initQuiz() {
-        let selectedCat = document.getElementById('category').value;
-        currentMode = document.getElementById('mode').value;
+/* ---------- Màn hình 1: chọn file ---------- */
+async function home() {
+  clearInterval(timerId); session = null;
+  $app.innerHTML = `<div class="card"><h2>Chọn chủ đề</h2><div class="menu" id="list">Đang tải danh sách...</div>
+    <button class="sec" onclick="historyScreen()">📜 Lịch sử thi thử</button></div>`;
+  let files = FILES;
+  if (!files.length) files = await autoList();
+  const list = document.getElementById('list');
+  if (!files.length) {
+    list.innerHTML = `<p>Chưa tìm thấy file Excel. Hãy điền tên file vào mảng <b>FILES</b> trong index.html.</p>`;
+    return;
+  }
+  list.innerHTML = "";
+  .forEach(f => {
+    const b = document.createElement('button');
+    b.textContent = "📂 " + f.replace(/\.xlsx?$/i, "");
+    b.onclick = () => loadFile(f);
+    list.appendChild(b);
+  });
+}
+async function autoList() {
+  try {
+    const host = location.hostname;
+    if (!host.endsWith("github.io")) return [];
+    const owner = host.split(".")[0];
+    const repo = location.pathname.split("/").filter(Boolean)[0];
+    const r = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/`);
+    const j = await r.json();
+    return j.filter(x => /\.xlsx?$/i.test(x.name)).map(x => x.name);
+  } catch (e) { return []; }
+}
 
-        // Lọc theo Chuyên môn / Văn hóa nếu có cột Phân loại / Loại
-        filteredQuestions = allQuestions.filter(q => {
-            if (selectedCat === 'tat_ca') return true;
-            let type = (q['Phân loại'] || q['PhanLoai'] || q['Loại'] || q['Loai'] || '').toString().toLowerCase();
-            if (selectedCat === 'chuyen_mon') return type.includes('chuyên môn') || type.includes('chuyen mon');
-            if (selectedCat === 'van_hoa') return type.includes('văn hóa') || type.includes('van hoa');
-            return true;
-        });
+/* ---------- Đọc Excel ---------- */
+async function loadFile(f) {
+  $app.innerHTML = `<div class="card">Đang tải "${esc(f)}"...</div>`;
+  try {
+    const res = await fetch(encodeURIComponent(f).replace(/%2F/g,"/"));
+    if (!res.ok) throw new Error(res.status);
+    const wb = XLSX.read(await res.arrayBuffer(), {type:"array"});
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, defval:""});
+    data = rows.slice(1).filter(r => r[1] && String(r[6]).trim() !== "").map(r => ({
+      cat: String(r[0]).trim(), key: catKey(r[0]),
+      q: String(r[1]), opts: [r[2],r[3],r[4],r[5]].map(String),
+      ans: parseInt(r[6]) - 1
+    }));
+    fileName = f.replace(/\.xlsx?$/i, "");
+    modeMenu();
+  } catch (e) {
+    $app.innerHTML = `<div class="card">Không tải được file. Lưu ý: phải chạy qua GitHub Pages / web server (không mở trực tiếp file://).<br><br><button onclick="home()">← Quay lại</button></div>`;
+  }
+}
 
-        if (filteredQuestions.length === 0) {
-            alert('Không tìm thấy câu hỏi thuộc danh mục đã chọn trong file Excel!');
-            return;
-        }
+/* ---------- Màn hình 2: Ôn luyện / Thi thử ---------- */
+function modeMenu() {
+  $app.innerHTML = `<div class="card"><h2>${esc(fileName)}</h2>
+    <p class="muted">${data.length} câu hỏi</p>
+    <label class="chk"><input type="checkbox" id="shufOpt" ${shuffleOpts?"checked":""} onchange="setShuffle(this.checked)">
+      Xáo trộn thứ tự đáp án A/B/C/D</label>
+    <div class="menu">
+      <button onclick="practiceMenu()">📖 Ôn luyện</button>
+      <button onclick="examMenu()">⏱️ Thi thử</button>
+    </div><button class="sec" onclick="home()">← Chọn chủ đề khác</button></div>`;
+}
+function setShuffle(v) { shuffleOpts = v; localStorage.setItem(SHUFFLE_KEY, v ? "1" : "0"); }
 
-        document.getElementById('setup-box').style.display = 'none';
-        document.getElementById('quiz-box').style.display = 'block';
+/* ---------- 2.1 Ôn luyện ---------- */
+function practiceMenu() {
+  const seen = new Map();
+  data.forEach(d => { if (!seen.has(d.key)) seen.set(d.key, d.cat); });
+  let html = `<div class="card"><h2>Ôn luyện – chọn phần</h2><div class="menu">`;
+  const hasCulture = CULTURE.some(k => seen.has(k));
+  if (hasCulture) html += `<button onclick="startPractice('culture')">🎓 Văn hóa (nghị quyết + nhiệm vụ + kiến thức chung + quy định, quy chế)</button>`;
+  seen.forEach((label, key) => {
+    const n = data.filter(d => d.key === key).length;
+    html += `<button onclick="startPractice('${esc(key).replace(/'/g,"\\'")}')">${esc(label)} <span class="muted">(${n} câu)</span></button>`;
+  });
+  html += `</div><button class="sec" onclick="modeMenu()">← Quay lại</button></div>`;
+  $app.innerHTML = html;
+}
+function startPractice(key) {
+  const pool = key === 'culture' ? data.filter(d => CULTURE.includes(d.key)) : data.filter(d => d.key === key);
+  const label = key === 'culture' ? "Ôn luyện văn hóa" : "Ôn luyện " + (pool[0]?.cat || "");
+  begin(shuffle(pool), 'practice', label);
+}
 
-        let modeText = currentMode === 'on_luyen' ? 'ÔN LUYỆN' : 'THI THỬ';
-        document.getElementById('display-info').innerText = `Chế độ: ${modeText} | Số câu: ${filteredQuestions.length}`;
+/* ---------- 2.2 Thi thử ---------- */
+function examMenu() {
+  $app.innerHTML = `<div class="card"><h2>Thi thử</h2>
+    <p class="muted">Mỗi đề ${TOTAL} câu – ${EXAM_MINUTES} phút.</p>
+    <div class="menu"><button onclick="startExam('cm')">🔧 Thi chuyên môn (${TOTAL} câu ngẫu nhiên)</button></div>
+    <h3>🎓 Thi văn hóa – số câu mỗi loại</h3>
+    <div class="quota">
+      ${CULTURE.map(k=>`<label>${QUOTA_LABEL[k]}<input type="number" min="0" id="q_${k}" placeholder="${DEFAULT_QUOTA[k]}"></label>`).join("")}
+    </div>
+    <p class="muted">Để trống sẽ dùng mặc định 14 – 10 – 8 – 8.</p>
+    <button onclick="startExam('vh')">Bắt đầu thi văn hóa</button>
+    <button class="sec" onclick="modeMenu()">← Quay lại</button></div>`;
+}
+function startExam(type) {
+  let picked = [], warn = [];
+  if (type === 'cm') {
+    const pool = data.filter(d => d.key === 'cm');
+    if (pool.length < TOTAL) warn.push(`Chuyên môn chỉ có ${pool.length}/${TOTAL} câu.`);
+    picked = shuffle(pool).slice(0, TOTAL);
+  } else {
+    CULTURE.forEach(k => {
+      const v = document.getElementById('q_'+k).value;
+      const want = v === "" ? DEFAULT_QUOTA[k] : Math.max(0, parseInt(v)||0);
+      const pool = data.filter(d => d.key === k);
+      if (pool.length < want) warn.push(`${QUOTA_LABEL[k]}: chỉ có ${pool.length}/${want} câu.`);
+      picked.push(...shuffle(pool).slice(0, want));
+    });
+    picked = shuffle(picked);
+  }
+  if (!picked.length) { alert("Không có câu hỏi phù hợp."); return; }
+  if (warn.length && !confirm(warn.join("\n") + "\nVẫn tiếp tục thi với số câu hiện có?")) return;
+  begin(picked, 'exam', type === 'cm' ? "Thi chuyên môn" : "Thi văn hóa");
+}
 
-        renderQuestions();
+/* ---------- Làm bài (chung) ---------- */
+function mixOptions(q) {
+  if (!shuffleOpts) return {...q};
+  const idx = shuffle([0,1,2,3].filter(i => i < q.opts.length));
+  return {...q, opts: idx.map(i => q.opts[i]), ans: idx.indexOf(q.ans)};
+}
+function begin(questions, mode, label) {
+  const qs = questions.map(mixOptions);
+  session = {qs, mode, label, i: 0, ch: new Array(qs.length).fill(-1), finished: false,
+             start: Date.now(), end: Date.now() + EXAM_MINUTES*60000};
+  clearInterval(timerId);
+  if (mode === 'exam') timerId = setInterval(tick, 500);
+  render();
+}
+function tick() {
+  if (!session || session.finished) return;
+  const left = Math.max(0, session.end - Date.now());
+  const el = document.getElementById('timer');
+  if (el) el.textContent = "⏱ " + fmtTime(Math.ceil(left/1000));
+  if (left <= 0) finish();
+}
+function render() {
+  const s = session, q = s.qs[s.i], ex = s.mode === 'exam';
+  const revealed = s.finished || (!ex && s.ch[s.i] >= 0);
+  let opts = q.opts.map((t, k) => {
+    let cls = "opt";
+    if (revealed) { if (k === q.ans) cls += " ok"; else if (k === s.ch[s.i]) cls += " bad"; }
+    else if (s.ch[s.i] === k) cls += " sel";
+    return `<button class="${cls}" onclick="choose(${k})">${"ABCD"[k]}. ${esc(t)}</button>`;
+  }).join("");
+  const grid = s.qs.map((_, n) => {
+    let c = n === s.i ? "cur " : "";
+    if (s.finished || (!ex && s.ch[n] >= 0)) c += s.ch[n] === s.qs[n].ans ? "ok" : (s.ch[n] >= 0 ? "bad" : "");
+    else if (s.ch[n] >= 0) c += "done";
+    return `<button class="${c}" onclick="go(${n})">${n+1}</button>`;
+  }).join("");
+  $app.innerHTML = `
+    <div class="card">
+      <div class="row"><b>Câu ${s.i+1}/${s.qs.length}</b><span class="muted">${esc(q.cat)}</span><span class="spacer"></span>
+        ${ex && !s.finished ? `<span class="timer" id="timer"></span>` : ""}</div>
+      <p style="font-size:18px">${esc(q.q)}</p>${opts}
+      <div class="row" style="margin-top:12px">
+        <button class="sec" onclick="go(${s.i-1})" ${s.i===0?"disabled":""}>← Trước</button>
+        <button class="sec" onclick="go(${s.i+1})" ${s.i===s.qs.length-1?"disabled":""}>Sau →</button>
+        <span class="spacer"></span>
+        ${s.finished ? `<button onclick="showResult()">Xem kết quả</button>` :
+          ex ? `<button onclick="if(confirm('Nộp bài?'))finish()">Nộp bài</button>` :
+               `<button class="sec" onclick="if(confirm('Thoát ôn luyện?'))practiceMenu()">Thoát</button>`}
+      </div>
+      <div class="grid">${grid}</div>
+    </div>`;
+  if (ex && !s.finished) tick();
+}
+function choose(k) {
+  const s = session;
+  if (s.finished) return;
+  if (s.mode === 'practice' && s.ch[s.i] >= 0) return;
+  s.ch[s.i] = k; render();
+}
+function go(n) { if (n>=0 && n<session.qs.length) { session.i = n; render(); } }
+function stats() {
+  const s = session;
+  const right = s.qs.filter((q, i) => s.ch[i] === q.ans).length;
+  const blank = s.ch.filter(c => c < 0).length;
+  const total = s.qs.length;
+  return {right, blank, wrong: total - right - blank, total, score10: total ? right / total * 10 : 0};
+}
+function finish() {
+  if (!session || session.finished) return;
+  clearInterval(timerId);
+  session.finished = true;
+  const st = stats();
+  if (session.mode === 'exam') {
+    saveHistory({
+      date: Date.now(), exam: fileName, label: session.label,
+      used: Math.min(EXAM_MINUTES*60, Math.round((Date.now() - session.start)/1000)),
+      ...st
+    });
+  }
+  showResult();
+}
+function showResult() {
+  const s = session, st = stats();
+  $app.innerHTML = `<div class="card">
+    <h2 style="text-align:center">Kết quả – ${esc(s.label)}</h2>
+    <div class="score">${st.right}/${st.total}</div>
+    <div class="score10">Điểm: <b>${fmtScore(st.score10)}</b>/10</div>
+    <p style="text-align:center">Đúng ${st.right} • Sai ${st.wrong} • Bỏ trống ${st.blank}</p>
+    ${s.mode === 'exam' ? `<p class="muted" style="text-align:center">Kết quả đã được lưu vào lịch sử.</p>` : ""}
+    <div class="row" style="justify-content:center">
+      <button onclick="session.i=0;render()">Xem lại bài làm</button>
+      <button class="sec" onclick="modeMenu()">Về menu</button>
+      <button class="sec" onclick="historyScreen()">📜 Lịch sử</button>
+      <button class="sec" onclick="home()">Chọn chủ đề khác</button>
+    </div></div>`;
+}
 
-        if (currentMode === 'thi_thu') {
-            document.getElementById('timer').style.display = 'block';
-            startTimer(filteredQuestions.length * 60); // 1 phút / câu
-            document.getElementById('submit-btn').style.display = 'block';
-        } else {
-            document.getElementById('timer').style.display = 'none';
-            document.getElementById('submit-btn').style.display = 'none'; // Ôn luyện xem trực tiếp
-        }
-    }
-
-    function renderQuestions() {
-        let container = document.getElementById('questions-container');
-        container.innerHTML = '';
-
-        filteredQuestions.forEach((q, index) => {
-            let qText = q['Câu hỏi'] || q['CauHoi'] || '';
-            let ansA = q['A'] || '';
-            let ansB = q['B'] || '';
-            let ansC = q['C'] || '';
-            let ansD = q['D'] || '';
-            let correct = (q['Đáp án'] || q['DapAn'] || '').toString().trim().toUpperCase();
-            let note = q['Ghi chú'] || q['Giải thích'] || '';
-
-            let html = `
-                <div class="question-card" id="q-card-${index}">
-                    <div class="question-title">Câu ${index + 1}: ${qText}</div>
-                    <div class="options">
-                        <label class="option-label" id="lbl-${index}-A">
-                            <input type="radio" name="q${index}" value="A" onchange="checkAnswer(${index}, 'A', '${correct}')"> A. ${ansA}
-                        </label>
-                        <label class="option-label" id="lbl-${index}-B">
-                            <input type="radio" name="q${index}" value="B" onchange="checkAnswer(${index}, 'B', '${correct}')"> B. ${ansB}
-                        </label>
-                        <label class="option-label" id="lbl-${index}-C">
-                            <input type="radio" name="q${index}" value="C" onchange="checkAnswer(${index}, 'C', '${correct}')"> C. ${ansC}
-                        </label>
-                        <label class="option-label" id="lbl-${index}-D">
-                            <input type="radio" name="q${index}" value="D" onchange="checkAnswer(${index}, 'D', '${correct}')"> D. ${ansD}
-                        </label>
-                    </div>
-                    <div class="explanation" id="exp-${index}">
-                        <strong>Đáp án đúng: ${correct}</strong> ${note ? '<br><i>' + note + '</i>' : ''}
-                    </div>
-                </div>
-            `;
-            container.innerHTML += html;
-        });
-    }
-
-    function checkAnswer(qIdx, selected, correct) {
-        if (currentMode !== 'on_luyen') return;
-
-        ['A', 'B', 'C', 'D'].forEach(opt => {
-            let lbl = document.getElementById(`lbl-${qIdx}-${opt}`);
-            lbl.classList.remove('correct-ans', 'wrong-ans');
-        });
-
-        let selectedLbl = document.getElementById(`lbl-${qIdx}-${selected}`);
-        let correctLbl = document.getElementById(`lbl-${qIdx}-${correct}`);
-
-        if (selected === correct) {
-            selectedLbl.classList.add('correct-ans');
-        } else {
-            selectedLbl.classList.add('wrong-ans');
-            if (correctLbl) correctLbl.classList.add('correct-ans');
-        }
-
-        document.getElementById(`exp-${qIdx}`).style.display = 'block';
-    }
-
-    function startTimer(seconds) {
-        let timerEl = document.getElementById('timer');
-        timerInterval = setInterval(() => {
-            let m = Math.floor(seconds / 60);
-            let s = seconds % 60;
-            timerEl.innerText = `${m < 10 ? '0':''}${m}:${s < 10 ? '0':''}${s}`;
-            if (seconds <= 0) {
-                clearInterval(timerInterval);
-                alert('Hết giờ làm bài!');
-                submitQuiz();
-            }
-            seconds--;
-        }, 1000);
-    }
-
-    function submitQuiz() {
-        if (timerInterval) clearInterval(timerInterval);
-
-        let score = 0;
-        filteredQuestions.forEach((q, index) => {
-            let selected = document.querySelector(`input[name="q${index}"]:checked`);
-            let correct = (q['Đáp án'] || q['DapAn'] || '').toString().trim().toUpperCase();
-            
-            if (selected) {
-                let val = selected.value;
-                let selectedLbl = document.getElementById(`lbl-${index}-${val}`);
-                let correctLbl = document.getElementById(`lbl-${index}-${correct}`);
-
-                if (val === correct) {
-                    score++;
-                    selectedLbl.classList.add('correct-ans');
-                } else {
-                    selectedLbl.classList.add('wrong-ans');
-                    if (correctLbl) correctLbl.classList.add('correct-ans');
-                }
-            } else {
-                let correctLbl = document.getElementById(`lbl-${index}-${correct}`);
-                if (correctLbl) correctLbl.classList.add('correct-ans');
-            }
-            document.getElementById(`exp-${index}`).style.display = 'block';
-        });
-
-        document.getElementById('submit-btn').style.display = 'none';
-        document.getElementById('result-box').style.display = 'block';
-        document.getElementById('result-score').innerText = `${score} / ${filteredQuestions.length}`;
-        document.getElementById('result-text').innerText = `Bạn đã hoàn thành bài thi với tỉ lệ đúng ${((score/filteredQuestions.length)*100).toFixed(1)}%`;
-        
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-    }
+home();
 </script>
-
 </body>
 </html>
