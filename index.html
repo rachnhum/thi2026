@@ -50,7 +50,7 @@
 // Liệt kê tên file Excel ở đây.
 // Nếu để trống [], web sẽ tự dò các file .xlsx trong repo qua GitHub API (chỉ chạy khi host trên github.io).
 const FILES = [
-  // "QLCP mảng xây dựng.xlsx",
+"QLCP mảng xây dựng.xlsx",
 ];
 const EXAM_MINUTES = 60;
 const TOTAL = 40;
@@ -133,7 +133,7 @@ async function home() {
     return;
   }
   list.innerHTML = "";
-  .forEach(f => {
+  files.forEach(f => {
     const b = document.createElement('button');
     b.textContent = "📂 " + f.replace(/\.xlsx?$/i, "");
     b.onclick = () => loadFile(f);
