@@ -156,19 +156,33 @@ async function autoList() {
 async function loadFile(f) {
   $app.innerHTML = `<div class="card">Đang tải "${esc(f)}"...</div>`;
   try {
-    const res = await fetch(encodeURIComponent(f).replace(/%2F/g,"/"));
-    if (!res.ok) throw new Error(res.status);
-    const wb = XLSX.read(await res.arrayBuffer(), {type:"array"});
-    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, defval:""});
+    // thử tên gốc và cả 2 kiểu mã hóa dấu tiếng Việt
+    const names = [...new Set([f, f.normalize("NFC"), f.normalize("NFD")])];
+    let res = null, lastStatus = "";
+    for (const n of names) {
+      const r = await fetch(encodeURIComponent(n).replace(/%2F/g, "/"));
+      if (r.ok) { res = r; break; }
+      lastStatus = r.status;
+    }
+    if (!res) throw new Error("Không tìm thấy file trên GitHub (lỗi " + lastStatus + "): " + f +
+      ". Hãy kiểm tra tên file thật trong repo (có thể thừa đuôi .xlsx.xlsx hoặc khác chữ hoa/thường).");
+    if (typeof XLSX === "undefined")
+      throw new Error("Thư viện đọc Excel không tải được. Kiểm tra mạng hoặc thử mạng khác.");
+    const wb = XLSX.read(await res.arrayBuffer(), {type: "array"});
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1, defval: ""});
     data = rows.slice(1).filter(r => r[1] && String(r[6]).trim() !== "").map(r => ({
       cat: String(r[0]).trim(), key: catKey(r[0]),
-      q: String(r[1]), opts: [r[2],r[3],r[4],r[5]].map(String),
+      q: String(r[1]), opts: [r[2], r[3], r[4], r[5]].map(String),
       ans: parseInt(r[6]) - 1
     }));
+    if (!data.length)
+      throw new Error("Đọc được file nhưng không có câu hỏi hợp lệ. Kiểm tra cột câu hỏi và cột trả lời.");
     fileName = f.replace(/\.xlsx?$/i, "");
     modeMenu();
   } catch (e) {
-    $app.innerHTML = `<div class="card">Không tải được file. Lưu ý: phải chạy qua GitHub Pages / web server (không mở trực tiếp file://).<br><br><button onclick="home()">← Quay lại</button></div>`;
+    $app.innerHTML = `<div class="card"><b>Không tải được file.</b><br>
+      <span class="muted">Chi tiết: ${esc(e.message)}</span><br><br>
+      <button onclick="home()">← Quay lại</button></div>`;
   }
 }
 
