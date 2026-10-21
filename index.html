@@ -78,6 +78,12 @@ const FILES = [
   "QLCP mảng MEP.xlsx",
   "QLCP mảng xây dựng.xlsx",
 ];
+// Đặt mật khẩu cho mục nào thì ghi vào đây (tên file phải giống hệt trong FILES).
+// Mục nào không ghi, hoặc để "" thì vào tự do, không có khóa.
+const LOCKS = {
+  "QLCP mảng MEP.xlsx": "1234",
+  // "QLCP mảng xây dựng.xlsx": "abcd",
+};
 const EXAM_MINUTES = 60;
 const TOTAL = 40;
 const DEFAULT_QUOTA = {nq:14, nv:10, kt:8, qd:8};
@@ -206,10 +212,22 @@ async function home() {
   list.innerHTML = "";
   files.forEach(f => {
     const b = document.createElement('button');
-    b.textContent = "📂 " + f.replace(/\.xlsx?$/i, "");
-    b.onclick = () => loadFile(f);
+    const locked = !!LOCKS[f];
+    b.textContent = (locked ? "🔒 " : "📂 ") + f.replace(/\.xlsx?$/i, "");
+    b.onclick = () => openTopic(f);
     list.appendChild(b);
   });
+}
+const unlocked = new Set();   // mục đã nhập đúng mật khẩu (nhớ đến khi tải lại trang)
+function openTopic(f) {
+  const pw = LOCKS[f];
+  if (pw && !unlocked.has(f)) {
+    const input = prompt('Mục "' + f.replace(/\.xlsx?$/i, "") + '" có mật khẩu.\nNhập mật khẩu để vào:');
+    if (input === null) return;                       // bấm Hủy
+    if (input.trim() !== String(pw)) { alert("Sai mật khẩu!"); return; }
+    unlocked.add(f);
+  }
+  loadFile(f);
 }
 async function autoList() {
   try {
