@@ -37,6 +37,31 @@
   .hist:last-child{border:0}
   .chk{display:flex;gap:8px;align-items:center;margin:10px 0;cursor:pointer}
   .chk input{width:18px;height:18px}
+
+  /* ====== Máy bay kéo cờ ====== */
+  .sky{position:relative;height:230px;overflow:hidden;pointer-events:none;margin-top:6px}
+  .flyer{position:absolute;left:0;top:0;height:60px;display:flex;align-items:center;will-change:transform}
+  .flyer.r{flex-direction:row}
+  .flyer.r .trail{flex-direction:row-reverse}
+  .flyer.l{flex-direction:row-reverse}
+  .flyer.l .trail{flex-direction:row}
+  .trail{display:flex;align-items:center;width:166px}
+  .rope{height:2px;background:#64748b;flex:none}
+  .rope.a{width:14px}
+  .rope.b{width:12px}
+  .banner{flex:none;width:104px;height:28px;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(#3b82f6,#1d4ed8);color:#fff;font-weight:800;font-size:13px;letter-spacing:.5px;
+    animation:wave .5s ease-in-out infinite alternate}
+  .flyer.r .banner{clip-path:polygon(0 0,100% 0,100% 100%,0 100%,14% 50%)}
+  .flyer.l .banner{clip-path:polygon(0 0,100% 0,86% 50%,100% 100%,0 100%)}
+  .vnflag{flex:none;width:36px;height:24px;background:#da251d;display:flex;align-items:center;justify-content:center;
+    animation:wave .5s ease-in-out .25s infinite alternate}
+  .vnflag i{display:block;width:14px;height:14px;background:#ffff00;
+    clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
+  .plane{flex:none;width:110px;height:59px;overflow:visible}
+  .plane .prop{transform-box:fill-box;transform-origin:center;animation:spin .12s linear infinite}
+  @keyframes spin{50%{transform:scaleY(.15)}}
+  @keyframes wave{from{transform:translateY(-3px) skewY(-4deg)}to{transform:translateY(3px) skewY(4deg)}}
 </style>
 </head>
 <body>
@@ -125,10 +150,55 @@ function clearHistory() {
 async function home() {
   clearInterval(timerId); session = null;
   $app.innerHTML = `<div class="card"><h2>Chọn chủ đề</h2><div class="menu" id="list">Đang tải danh sách...</div>
-    <button class="sec" onclick="historyScreen()">📜 Lịch sử thi thử</button></div>`;
+    <button class="sec" onclick="historyScreen()">📜 Lịch sử thi thử</button></div>
+    <div class="sky" id="sky">
+      <div class="flyer r">
+        <div class="trail">
+          <div class="rope a"></div>
+          <div class="banner">QLCP BXD</div>
+          <div class="rope b"></div>
+          <div class="vnflag"><i></i></div>
+        </div>
+        <svg class="plane" viewBox="0 0 150 80" xmlns="http://www.w3.org/2000/svg">
+          <!-- đuôi -->
+          <polygon points="34,50 10,26 22,26 50,44" fill="#dc2626"/>
+          <polygon points="22,54 4,58 6,50 26,48" fill="#b91c1c"/>
+          <!-- bánh xe -->
+          <line x1="70" y1="60" x2="66" y2="72" stroke="#475569" stroke-width="3"/>
+          <line x1="100" y1="60" x2="104" y2="72" stroke="#475569" stroke-width="3"/>
+          <circle cx="66" cy="73" r="5" fill="#1e293b"/><circle cx="104" cy="73" r="5" fill="#1e293b"/>
+          <!-- thân -->
+          <ellipse cx="78" cy="50" rx="48" ry="14" fill="#ef4444"/>
+          <path d="M40,52 Q78,60 116,52" fill="none" stroke="#fff" stroke-width="2"/>
+          <rect x="62" y="56" width="46" height="8" rx="4" fill="#f8fafc" stroke="#94a3b8"/>
+          <!-- mũi + cánh quạt -->
+          <circle cx="126" cy="50" r="5" fill="#475569"/>
+          <ellipse class="prop" cx="130" cy="50" rx="3" ry="17" fill="#64748b" opacity=".8"/>
+          <!-- cô phi công -->
+          <circle cx="84" cy="27" r="15" fill="#7c3aed"/>
+          <circle cx="84" cy="29" r="12.5" fill="#fde0c8"/>
+          <path d="M71,24 Q84,14 97,24 Q84,20 71,24Z" fill="#7c3aed"/>
+          <circle cx="79" cy="29" r="5" fill="#fff" stroke="#1e293b" stroke-width="1.5"/>
+          <circle cx="90" cy="29" r="5" fill="#fff" stroke="#1e293b" stroke-width="1.5"/>
+          <line x1="84" y1="29" x2="85" y2="29" stroke="#1e293b" stroke-width="1.5"/>
+          <circle cx="80" cy="29" r="1.8" fill="#1e293b"/><circle cx="91" cy="29" r="1.8" fill="#1e293b"/>
+          <path d="M80,36 Q84.5,40 89,36" fill="none" stroke="#b45309" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="74" cy="34" r="2.2" fill="#fca5a5" opacity=".7"/><circle cx="95" cy="34" r="2.2" fill="#fca5a5" opacity=".7"/>
+          <!-- mũ có cánh -->
+          <path d="M70,21 Q70,6 84,6 Q98,6 98,21 Q84,15 70,21Z" fill="#f8fafc" stroke="#94a3b8" stroke-width="1"/>
+          <path d="M70,15 L58,10 L61,20Z" fill="#e2e8f0" stroke="#94a3b8" stroke-width=".8"/>
+          <path d="M98,15 L110,10 L107,20Z" fill="#e2e8f0" stroke="#94a3b8" stroke-width=".8"/>
+          <!-- khăn quàng -->
+          <polygon points="76,42 60,50 66,40" fill="#facc15"/>
+          <ellipse cx="84" cy="41" rx="12" ry="4" fill="#facc15"/>
+        </svg>
+      </div>
+    </div>`;
+  startSky();
   let files = FILES;
   if (!files.length) files = await autoList();
   const list = document.getElementById('list');
+  if (!list) return;
   if (!files.length) {
     list.innerHTML = `<p>Chưa tìm thấy file Excel. Hãy điền tên file vào mảng <b>FILES</b> trong index.html.</p>`;
     return;
@@ -349,6 +419,65 @@ function showResult() {
       <button class="sec" onclick="historyScreen()">📜 Lịch sử</button>
       <button class="sec" onclick="home()">Chọn chủ đề khác</button>
     </div></div>`;
+}
+
+/* ---------- Máy bay kéo cờ ---------- */
+let skyRaf = null;
+function startSky() {
+  cancelAnimationFrame(skyRaf);
+  const sky = document.getElementById('sky');
+  if (!sky) return;
+  const fl = sky.querySelector('.flyer'), plane = fl.querySelector('.plane');
+  const LANES = [45, 90, 135, 180];   // độ cao 4 làn bay
+  const SPEED = 140;                  // px/giây
+  const TRAIL = 166, HALF = 55;       // chiều dài cờ, nửa thân máy bay
+  let W = 0, pts = [], cum = [], total = 0, dist = 0, last = performance.now(), dir = 0;
+
+  function build() {
+    const xl = 20, xr = W - 20, rx = 40;
+    pts = [[W + 120, LANES[0]], [xl, LANES[0]]];
+    const turn = (x, s, y1, y2) => {
+      const r = (y2 - y1) / 2, cy = (y1 + y2) / 2;
+      for (let k = 1; k <= 24; k++) {
+        const th = k / 24 * Math.PI;
+        pts.push([x + s * rx * Math.sin(th), cy - r * Math.cos(th)]);
+      }
+    };
+    turn(xl, -1, LANES[0], LANES[1]); pts.push([xr, LANES[1]]);
+    turn(xr, +1, LANES[1], LANES[2]); pts.push([xl, LANES[2]]);
+    turn(xl, -1, LANES[2], LANES[3]); pts.push([W + 330, LANES[3]]);
+    cum = [0];
+    for (let i = 1; i < pts.length; i++)
+      cum.push(cum[i-1] + Math.hypot(pts[i][0]-pts[i-1][0], pts[i][1]-pts[i-1][1]));
+    total = cum[cum.length - 1];
+  }
+
+  function frame(now) {
+    if (!document.body.contains(sky)) return;        // đã rời màn hình chủ đề
+    const w = sky.clientWidth;
+    if (w !== W) { const ratio = total ? dist / total : 0; W = w; build(); dist = ratio * total; }
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    dist += SPEED * dt;
+    if (dist >= total) dist -= total;                // hết làn 4 -> bay lại từ đầu
+
+    let i = 1;
+    while (i < cum.length - 1 && cum[i] < dist) i++;
+    const a = pts[i-1], b = pts[i];
+    const t = (dist - cum[i-1]) / ((cum[i] - cum[i-1]) || 1);
+    const x = a[0] + (b[0]-a[0]) * t, y = a[1] + (b[1]-a[1]) * t;
+    const dx = b[0]-a[0], dy = b[1]-a[1];
+
+    if (Math.abs(dx) > 0.001) {
+      const nd = dx > 0 ? 1 : -1;
+      if (nd !== dir) { dir = nd; fl.className = 'flyer ' + (dir === 1 ? 'r' : 'l'); }
+    }
+    const tilt = Math.atan2(dy, Math.abs(dx) || 1) * 180 / Math.PI * 0.6;
+    plane.style.transform = `scaleX(${dir || 1}) rotate(${tilt}deg)`;
+    const anchor = dir === 1 ? TRAIL + HALF : HALF;
+    fl.style.transform = `translate(${x - anchor}px, ${y - 30}px)`;
+    skyRaf = requestAnimationFrame(frame);
+  }
+  skyRaf = requestAnimationFrame(frame);
 }
 
 home();
