@@ -63,12 +63,36 @@
   .plane .prop{transform-box:fill-box;transform-origin:center;animation:spin .12s linear infinite}
   @keyframes spin{50%{transform:scaleY(.15)}}
   @keyframes wave{from{transform:translateY(-3px) skewY(-4deg)}to{transform:translateY(3px) skewY(4deg)}}
+   /* ====== Thanh thống kê truy cập ====== */
+  .vs-bar{--vs-accent:#2563eb;--vs-bg:#0f172a;--vs-text:#fff;--vs-muted:#94a3b8;
+    display:flex;justify-content:center;align-items:center;gap:40px;padding:28px 20px;margin-top:30px;
+    background:var(--vs-bg);border-top:3px solid var(--vs-accent)}
+  .vs-item{text-align:center;min-width:120px}
+  .vs-num{display:inline-block;font-size:32px;font-weight:700;color:var(--vs-text);
+    letter-spacing:.5px;font-variant-numeric:tabular-nums}
+  .vs-label{display:block;margin-top:4px;font-size:12px;text-transform:uppercase;
+    letter-spacing:1.5px;color:var(--vs-muted)}
+  .vs-divider{width:1px;height:44px;background:rgba(255,255,255,.15)}
+  @media (max-width:600px){
+    .vs-bar{gap:18px;padding:22px 10px}
+    .vs-num{font-size:22px}
+    .vs-label{font-size:10px;letter-spacing:1px}
+    .vs-item{min-width:0}
+    .vs-divider{height:34px}
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>📝 Ôn luyện &amp; Thi thử</h1>
   <div id="app"></div>
+</div>
+ <div class="vs-bar">
+  <div class="vs-item"><span class="vs-num" id="vs-total">0</span><span class="vs-label">Tổng lượt truy cập</span></div>
+  <div class="vs-divider"></div>
+  <div class="vs-item"><span class="vs-num" id="vs-today">0</span><span class="vs-label">Hôm nay</span></div>
+  <div class="vs-divider"></div>
+  <div class="vs-item"><span class="vs-num" id="vs-yesterday">0</span><span class="vs-label">Hôm qua</span></div>
 </div>
 
 <script>
@@ -502,6 +526,45 @@ function startSky() {
 }
 
 home();
+</script>
+ <script>
+(function () {
+  var NS = "thithu-ten-rieng-cua-anh";   // <-- ĐỔI thành tên riêng, không dấu, không khoảng trắng
+  var BASE = "https://abacus.jasoncameron.dev";
+
+  function dayKey(offset) {
+    var d = new Date(Date.now() + offset * 86400000);
+    return "d" + d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2);
+  }
+  function call(action, key) {
+    return fetch(BASE + "/" + action + "/" + NS + "/" + key)
+      .then(function (r) { return r.ok ? r.json() : { value: 0 }; })
+      .then(function (j) { return j.value || 0; })
+      .catch(function () { return 0; });
+  }
+  function animate(id, target) {
+    var el = document.getElementById(id), start = null, duration = 1200;
+    function step(t) {
+      if (!start) start = t;
+      var p = Math.min((t - start) / duration, 1);
+      el.textContent = Math.floor(target * (1 - Math.pow(1 - p, 3))).toLocaleString("vi-VN");
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  var today = dayKey(0), yesterday = dayKey(-1);
+  var counted = localStorage.getItem("vs_last") === today;   // mỗi trình duyệt chỉ tính 1 lượt/ngày
+  var action = counted ? "get" : "hit";
+  if (!counted) localStorage.setItem("vs_last", today);
+
+  Promise.all([call(action, "total"), call(action, today), call("get", yesterday)])
+    .then(function (v) {
+      animate("vs-total", v[0]);
+      animate("vs-today", v[1]);
+      animate("vs-yesterday", v[2]);
+    });
+})();
 </script>
 </body>
 </html>
