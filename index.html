@@ -87,7 +87,7 @@ const LOCKS = {
 };
 const EXAM_MINUTES = 60;
 const TOTAL = 40;
-const DEFAULT_QUOTA = {nq:14, nv:10, kt:8, qd:8};
+const DEFAULT_QUOTA = {nq:14, nv:12, kt:8, qd:6};
 const QUOTA_LABEL = {nq:"Nghị quyết", nv:"Nhiệm vụ", kt:"Kiến thức chung", qd:"Quy định, quy chế"};
 const HISTORY_KEY = "thi_history_v1";
 const SHUFFLE_KEY = "thi_shuffle_opts";
@@ -318,7 +318,7 @@ function examMenu() {
     <div class="quota">
       ${CULTURE.map(k=>`<label>${QUOTA_LABEL[k]}<input type="number" min="0" id="q_${k}" placeholder="${DEFAULT_QUOTA[k]}"></label>`).join("")}
     </div>
-    <p class="muted">Để trống sẽ dùng mặc định 14 – 10 – 8 – 8.</p>
+    <p class="muted">Để trống sẽ dùng mặc định 14 – 12 – 8 – 6.</p>
     <button onclick="startExam('vh')">Bắt đầu thi văn hóa</button>
     <button class="sec" onclick="modeMenu()">← Quay lại</button></div>`;
 }
@@ -329,6 +329,8 @@ function startExam(type) {
     if (pool.length < TOTAL) warn.push(`Chuyên môn chỉ có ${pool.length}/${TOTAL} câu.`);
     picked = shuffle(pool).slice(0, TOTAL);
   } else {
+    // Thứ tự nhóm: Nghị quyết -> Nhiệm vụ -> Kiến thức chung -> Quy định, quy chế
+    // (trong mỗi nhóm vẫn chọn ngẫu nhiên, KHÔNG xáo trộn lại toàn bộ)
     CULTURE.forEach(k => {
       const v = document.getElementById('q_'+k).value;
       const want = v === "" ? DEFAULT_QUOTA[k] : Math.max(0, parseInt(v)||0);
@@ -336,7 +338,6 @@ function startExam(type) {
       if (pool.length < want) warn.push(`${QUOTA_LABEL[k]}: chỉ có ${pool.length}/${want} câu.`);
       picked.push(...shuffle(pool).slice(0, want));
     });
-    picked = shuffle(picked);
   }
   if (!picked.length) { alert("Không có câu hỏi phù hợp."); return; }
   if (warn.length && !confirm(warn.join("\n") + "\nVẫn tiếp tục thi với số câu hiện có?")) return;
