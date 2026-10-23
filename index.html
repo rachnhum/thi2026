@@ -16,7 +16,8 @@
   button.danger{background:#dc2626}
   button:disabled{opacity:.5;cursor:default}
   .menu button{display:block;width:100%;margin:8px 0;text-align:left;padding:14px}
-   .menu button .muted{color:#fff;font-style:italic}
+  /* NEW: chữ mô tả nhỏ hơn một chút */
+  .menu button .muted{color:#fff;font-style:italic;font-size:13px;opacity:.9}
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .spacer{flex:1}
   .opt{display:block;width:100%;text-align:left;background:#fff;color:#1e293b;border:2px solid #cbd5e1;margin:8px 0;padding:12px}
@@ -106,6 +107,11 @@ const FILES = [
 // Mục nào không ghi, hoặc để "" thì vào tự do, không có khóa.
 const LOCKS = {
  "van hoa full.xlsx": "1234",
+};
+// NEW: Dòng diễn giải hiển thị dưới tên chủ đề (tên file phải giống hệt trong FILES).
+// Mục nào không ghi thì chỉ hiện tên chủ đề.
+const DESCS = {
+ "van hoa full.xlsx": "Văn hóa + chuyên môn QLCP xây dựng",
 };
 const EXAM_MINUTES = 60;
 const TOTAL = 40;
@@ -236,7 +242,9 @@ async function home() {
   files.forEach(f => {
     const b = document.createElement('button');
     const locked = !!LOCKS[f];
-    b.textContent = (locked ? "🔒 " : "📂 ") + f.replace(/\.xlsx?$/i, "");
+    // NEW: tiêu đề + dòng diễn giải bên dưới
+    const title = (locked ? "🔒 " : "📂 ") + f.replace(/\.xlsx?$/i, "");
+    b.innerHTML = esc(title) + (DESCS[f] ? `<br><span class="muted">${esc(DESCS[f])}</span>` : "");
     b.onclick = () => openTopic(f);
     list.appendChild(b);
   });
