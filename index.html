@@ -41,13 +41,13 @@
   .chk input{width:18px;height:18px}
 
   /* ====== Thầy trò Đường Tăng đi thỉnh kinh ====== */
-  .sky{position:relative;height:210px;overflow:hidden;pointer-events:none;margin-top:6px;
+  .sky{position:relative;height:210px;overflow:hidden;pointer-events:none;margin-top:6px;isolation:isolate;
     border-radius:12px;background:linear-gradient(#bfdbfe,#eff6ff 70%,#f1f5f9)}
-  .ground{position:absolute;left:0;right:0;bottom:0;height:30px;z-index:1;
+  .ground{position:absolute;left:0;right:0;bottom:0;height:30px;z-index:3;
     background:linear-gradient(#bbf7d0,#86efac)}
   .ground:after{content:"";position:absolute;left:0;right:0;bottom:2px;height:14px;
     background:#e7d3a8;opacity:.9}
-  .group{position:absolute;left:0;bottom:10px;z-index:2;display:flex;align-items:flex-end;
+  .group{position:absolute;left:0;bottom:10px;z-index:5;display:flex;align-items:flex-end;
     transform-origin:left bottom;will-change:transform}
   .ch{flex:none;line-height:0}
   .ch+.ch{margin-left:-6px}
@@ -69,16 +69,47 @@
   .load{transform-origin:30px 30px;animation:sway .72s ease-in-out infinite alternate}
   @keyframes sway{from{transform:rotate(-3deg)}to{transform:rotate(3deg)}}
 
-  /* hiệu ứng môi trường */
+  /* động tác ngẫu nhiên */
+  /* 1. Ngựa bạch nhảy 2 chân trước lên */
+  .rw{transform-origin:62px 118px}
+  .horse.rearing .rw{animation:rear 2s ease-in-out}
+  .horse.rearing .bob{animation:none}
+  .horse.rearing .rl{animation:none}
+  .horse.rearing .fl{animation:paw .3s ease-in-out infinite alternate}
+  @keyframes rear{0%{transform:rotate(0)}22%{transform:rotate(-24deg)}38%{transform:rotate(-20deg)}
+    54%{transform:rotate(-25deg)}70%{transform:rotate(-22deg)}100%{transform:rotate(0)}}
+  @keyframes paw{from{transform:rotate(-22deg)}to{transform:rotate(-52deg)}}
+  /* 2. Bát Giới quay cào */
+  .rake{transform-origin:84px 57px}
+  .bj.twirl{position:relative;z-index:3}
+  .bj.twirl .rake{animation:twirl 1.5s ease-in-out}
+  @keyframes twirl{from{transform:rotate(0)}to{transform:rotate(720deg)}}
+  /* 3. Sa Tăng quay đầu nhìn về phía sau */
+  .head{transform-origin:60px 64px}
+  .st.lookback .head{animation:lookH 2.6s ease-in-out}
+  .st.lookback .eyes{animation:lookE 2.6s ease-in-out}
+  @keyframes lookH{0%,100%{transform:translateX(0) rotate(0)}18%,78%{transform:translateX(-4px) rotate(-9deg)}}
+  @keyframes lookE{0%,100%{transform:translateX(0)}18%,78%{transform:translateX(-9px)}}
+  /* 4. Ngộ Không nhảy tưng tưng */
+  .wk.hop .pil{animation:hop .9s ease-out}
+  @keyframes hop{0%,100%{transform:translateY(0)}20%{transform:translateY(-28px)}40%{transform:translateY(0)}
+    60%{transform:translateY(-18px)}80%{transform:translateY(0)}}
+
+  /* cảnh vật & hiệu ứng môi trường */
+  .scn{position:absolute;left:0;top:0;line-height:0;will-change:transform}
+  .mtn{z-index:1}
+  .ftree{z-index:2;opacity:.75}
+  .ntree{z-index:4}
+  .stone{z-index:4}
   .cloud{position:absolute;left:0;top:0;z-index:0;will-change:transform}
   .cloud i{position:absolute;background:#fff;border-radius:50%;opacity:.92}
-  .bird{position:absolute;left:0;top:0;z-index:1;line-height:0}
+  .bird{position:absolute;left:0;top:0;z-index:2;line-height:0}
   .bird path{transform-box:fill-box;transform-origin:center;animation:flapw .3s ease-in-out infinite alternate}
   @keyframes flapw{from{transform:scaleY(1)}to{transform:scaleY(-.6)}}
-  .gust{position:absolute;left:0;top:0;z-index:3;height:2px;border-radius:2px;background:rgba(100,116,139,.4)}
-  .dust{position:absolute;left:0;top:0;z-index:3;border-radius:50%;background:rgba(168,140,98,.55);
+  .gust{position:absolute;left:0;top:0;z-index:6;height:2px;border-radius:2px;background:rgba(100,116,139,.4)}
+  .dust{position:absolute;left:0;top:0;z-index:6;border-radius:50%;background:rgba(168,140,98,.55);
     filter:blur(1px)}
-  .leaf{position:absolute;left:0;top:0;z-index:4;width:10px;height:6px;border-radius:0 100% 0 100%}
+  .leaf{position:absolute;left:0;top:0;z-index:7;width:10px;height:6px;border-radius:0 100% 0 100%}
 
    /* ====== Thanh thống kê truy cập ====== */
   .vs-bar{--vs-accent:#2563eb;--vs-bg:#0f172a;--vs-text:#fff;--vs-muted:#94a3b8;
@@ -206,8 +237,8 @@ async function home() {
   <div class="ground"></div>
   <div class="group">
 
-    <!-- 4. SA TĂNG (đi sau cùng, gánh hành lý) -->
-    <div class="ch"><svg class="pil" viewBox="0 0 120 112" width="98">
+    <!-- 4. SA TĂNG (gánh hành lý) -->
+    <div class="ch st"><svg class="pil" viewBox="0 0 120 112" width="98">
       <g class="legB"><rect x="62" y="88" width="10" height="16" rx="4" fill="#1e3a8a"/><ellipse cx="68" cy="106" rx="8" ry="4.5" fill="#f8fafc" stroke="#94a3b8"/></g>
       <g class="legA"><rect x="46" y="88" width="10" height="16" rx="4" fill="#1e3a8a"/><ellipse cx="52" cy="106" rx="8" ry="4.5" fill="#f8fafc" stroke="#94a3b8"/></g>
       <g class="bob">
@@ -222,25 +253,31 @@ async function home() {
         <path d="M39,80 Q60,86 81,80 L82,92 L38,92Z" fill="#1e3a8a"/>
         <path d="M74,68 Q82,62 80,50" stroke="#cbd5e1" stroke-width="7" stroke-linecap="round" fill="none"/>
         <circle cx="80" cy="48" r="4.5" fill="#d9a678"/>
-        <circle cx="36" cy="40" r="5" fill="#d9a678"/><circle cx="84" cy="40" r="5" fill="#d9a678"/>
-        <circle cx="60" cy="38" r="24" fill="#d9a678"/>
-        <path d="M37,28 Q60,12 83,28 L83,34 Q60,22 37,34Z" fill="#cbd5e1" stroke="#64748b"/>
-        <path d="M55,21 Q60,28 65,21 Q60,24 55,21Z" fill="#334155"/>
-        <path d="M38,42 Q40,66 60,68 Q80,66 82,42 Q70,56 60,54 Q50,56 38,42Z" fill="#1e293b"/>
-        <circle cx="51" cy="39" r="3.6" fill="#111"/><circle cx="69" cy="39" r="3.6" fill="#111"/>
-        <circle cx="52" cy="38" r="1.1" fill="#fff"/><circle cx="70" cy="38" r="1.1" fill="#fff"/>
+        <g class="head">
+          <circle cx="36" cy="40" r="5" fill="#d9a678"/><circle cx="84" cy="40" r="5" fill="#d9a678"/>
+          <circle cx="60" cy="38" r="24" fill="#d9a678"/>
+          <path d="M37,28 Q60,12 83,28 L83,34 Q60,22 37,34Z" fill="#cbd5e1" stroke="#64748b"/>
+          <path d="M55,21 Q60,28 65,21 Q60,24 55,21Z" fill="#334155"/>
+          <path d="M38,42 Q40,66 60,68 Q80,66 82,42 Q70,56 60,54 Q50,56 38,42Z" fill="#1e293b"/>
+          <g class="eyes">
+            <circle cx="51" cy="39" r="3.6" fill="#111"/><circle cx="69" cy="39" r="3.6" fill="#111"/>
+            <circle cx="52" cy="38" r="1.1" fill="#fff"/><circle cx="70" cy="38" r="1.1" fill="#fff"/>
+          </g>
+        </g>
         <path d="M40,64 Q60,86 80,64" stroke="#7f1d1d" stroke-width="6" stroke-dasharray="0 6.5" stroke-linecap="round" fill="none"/>
       </g>
     </svg></div>
 
     <!-- 3. BÁT GIỚI -->
-    <div class="ch"><svg class="pil" viewBox="0 0 100 112" width="82">
+    <div class="ch bj"><svg class="pil" viewBox="0 0 100 112" width="82">
       <g class="legB"><rect x="54" y="90" width="10" height="14" rx="4" fill="#1e293b"/><ellipse cx="60" cy="106" rx="8" ry="4.5" fill="#f8fafc" stroke="#94a3b8"/></g>
       <g class="legA"><rect x="38" y="90" width="10" height="14" rx="4" fill="#1e293b"/><ellipse cx="44" cy="106" rx="8" ry="4.5" fill="#f8fafc" stroke="#94a3b8"/></g>
       <g class="bob">
-        <line x1="84" y1="14" x2="84" y2="100" stroke="#92400e" stroke-width="3.5"/>
-        <rect x="72" y="12" width="26" height="4" rx="1" fill="#94a3b8"/>
-        <path d="M74,16V26M80,16V26M88,16V26M94,16V26" stroke="#94a3b8" stroke-width="2.5"/>
+        <g class="rake">
+          <line x1="84" y1="14" x2="84" y2="100" stroke="#92400e" stroke-width="3.5"/>
+          <rect x="72" y="12" width="26" height="4" rx="1" fill="#94a3b8"/>
+          <path d="M74,16V26M80,16V26M88,16V26M94,16V26" stroke="#94a3b8" stroke-width="2.5"/>
+        </g>
         <path d="M30,92 Q28,62 50,60 Q72,62 70,92Z" fill="#1e293b"/>
         <rect x="32" y="76" width="36" height="5" fill="#92400e"/>
         <path d="M66,68 Q76,72 82,72" stroke="#1e293b" stroke-width="7" stroke-linecap="round" fill="none"/>
@@ -259,9 +296,9 @@ async function home() {
     </svg></div>
 
     <!-- 2. ĐƯỜNG TĂNG + NGỰA BẠCH -->
-    <div class="ch horse"><svg class="pil" viewBox="0 0 170 124" width="150">
-      <g class="legB"><rect x="114" y="92" width="8" height="26" rx="3" fill="#e2e8f0" stroke="#cbd5e1"/><ellipse cx="118" cy="119" rx="6" ry="3.5" fill="#475569"/></g>
-      <g class="legB" style="animation-name:step"><rect x="50" y="92" width="8" height="26" rx="3" fill="#e2e8f0" stroke="#cbd5e1"/><ellipse cx="54" cy="119" rx="6" ry="3.5" fill="#475569"/></g>
+    <div class="ch horse"><svg class="pil" viewBox="0 0 170 124" width="150"><g class="rw">
+      <g class="legB fl"><rect x="114" y="92" width="8" height="26" rx="3" fill="#e2e8f0" stroke="#cbd5e1"/><ellipse cx="118" cy="119" rx="6" ry="3.5" fill="#475569"/></g>
+      <g class="legB rl"><rect x="50" y="92" width="8" height="26" rx="3" fill="#e2e8f0" stroke="#cbd5e1"/><ellipse cx="54" cy="119" rx="6" ry="3.5" fill="#475569"/></g>
       <g class="bob">
         <g class="tail"><path d="M42,72 Q22,74 20,96 Q30,88 36,90 Q30,80 44,80Z" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/></g>
         <ellipse cx="82" cy="80" rx="42" ry="22" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
@@ -287,12 +324,12 @@ async function home() {
         <rect x="62" y="14" width="40" height="6" rx="2" fill="#facc15"/>
         <circle cx="82" cy="4" r="3" fill="#facc15"/>
       </g>
-      <g class="legA"><rect x="104" y="92" width="8" height="26" rx="3" fill="#fff" stroke="#cbd5e1"/><ellipse cx="108" cy="119" rx="6" ry="3.5" fill="#475569"/></g>
-      <g class="legA"><rect x="62" y="92" width="8" height="26" rx="3" fill="#fff" stroke="#cbd5e1"/><ellipse cx="66" cy="119" rx="6" ry="3.5" fill="#475569"/></g>
-    </svg></div>
+      <g class="legA fl"><rect x="104" y="92" width="8" height="26" rx="3" fill="#fff" stroke="#cbd5e1"/><ellipse cx="108" cy="119" rx="6" ry="3.5" fill="#475569"/></g>
+      <g class="legA rl"><rect x="62" y="92" width="8" height="26" rx="3" fill="#fff" stroke="#cbd5e1"/><ellipse cx="66" cy="119" rx="6" ry="3.5" fill="#475569"/></g>
+    </g></svg></div>
 
-    <!-- 1. TÔN NGỘ KHÔNG (đi đầu, cầm gậy + cờ QLCP BXD) -->
-    <div class="ch"><svg class="pil" viewBox="0 0 100 112" width="82">
+    <!-- 1. TÔN NGỘ KHÔNG (cầm gậy + cờ QLCP BXD) -->
+    <div class="ch wk"><svg class="pil" viewBox="0 0 100 112" width="82">
       <g class="legB"><rect x="54" y="88" width="10" height="16" rx="4" fill="#facc15" stroke="#b45309"/><path d="M54,95H64" stroke="#1e293b" stroke-width="3"/><rect x="55" y="101" width="9" height="4" fill="#fff"/><ellipse cx="61" cy="106" rx="8" ry="4.5" fill="#1e293b"/></g>
       <g class="legA"><rect x="38" y="88" width="10" height="16" rx="4" fill="#facc15" stroke="#b45309"/><path d="M38,95H48" stroke="#1e293b" stroke-width="3"/><rect x="39" y="101" width="9" height="4" fill="#fff"/><ellipse cx="45" cy="106" rx="8" ry="4.5" fill="#1e293b"/></g>
       <g class="bob">
@@ -575,11 +612,17 @@ function startSky() {
   const group = sky.querySelector('.group');
   const alive = () => token === skyToken && document.body.contains(sky);
   const R = (a, b) => a + Math.random() * (b - a);
-  const SPEED = 42;                       // px/giây: tốc độ đoàn đi (tăng/giảm tùy ý)
-  let W = 0, H = 0, sc = 1, x = 0, last = performance.now();
-  const resize = () => { W = sky.clientWidth; H = sky.clientHeight; sc = W < 520 ? 0.75 : 1; };
-  resize();
-  x = -group.offsetWidth * sc - 10;
+  let W = 0, H = 0, sc = 1, gx = 0;
+
+  /* đoàn thầy trò đứng cố định giữa khung hình */
+  const place = () => {
+    W = sky.clientWidth; H = sky.clientHeight; sc = W < 520 ? 0.75 : 1;
+    gx = Math.max(4, (W - group.offsetWidth * sc) / 2);
+    group.style.transform = `translateX(${gx}px) scale(${sc})`;
+  };
+  place();
+  const onResize = () => { if (!alive()) { window.removeEventListener('resize', onResize); return; } place(); };
+  window.addEventListener('resize', onResize);
 
   const spawn = (cls, html) => {
     const e = document.createElement('div');
@@ -598,6 +641,74 @@ function startSky() {
     };
     setTimeout(run, first == null ? R(min, max) : first);
   };
+
+  /* ===== Cảnh vật trôi ngược (視差 parallax: xa thì chậm, gần thì nhanh) ===== */
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  const GREENS = [['#2f8f4e', '#47a864'], ['#3b9c5a', '#5cb978'], ['#4d8f3a', '#6fae55']];
+  const PINES = ['#1f7a4d', '#2a8c5a', '#2f6f4a'];
+
+  function treeSvg(h) {
+    if (Math.random() < .5) {
+      const g = pick(GREENS), w = h * .7;
+      return {w, html: `<svg width="${w}" height="${h}" viewBox="0 0 70 100">
+        <rect x="31" y="58" width="8" height="42" fill="#7c4a21"/>
+        <circle cx="35" cy="38" r="26" fill="${g[0]}"/>
+        <circle cx="24" cy="48" r="17" fill="${g[1]}"/><circle cx="48" cy="46" r="18" fill="${g[1]}"/></svg>`};
+    }
+    const c = pick(PINES), w = h * .6;
+    return {w, html: `<svg width="${w}" height="${h}" viewBox="0 0 60 100">
+      <rect x="27" y="76" width="6" height="24" fill="#6b4423"/>
+      <polygon points="30,4 52,44 8,44" fill="${c}"/>
+      <polygon points="30,24 56,66 4,66" fill="${c}"/>
+      <polygon points="30,44 58,84 2,84" fill="${c}"/></svg>`};
+  }
+  const mkMountain = () => {
+    const w = R(130, 240), h = R(55, 95);
+    const p1x = R(35, 80), p1y = R(10, 35), vx = p1x + R(25, 40), vy = R(45, 60), p2x = vx + R(25, 50), p2y = R(5, 30);
+    const col = pick(['#b7c9e2', '#a9bdd9', '#c3d3e8']);
+    return {cls: 'scn mtn', w, y: H - 26 - h, html:
+      `<svg width="${w}" height="${h}" viewBox="0 0 200 100" preserveAspectRatio="none">
+        <path d="M0,100 L${p1x},${p1y} L${vx},${vy} L${p2x},${p2y} L200,100Z" fill="${col}"/>
+        <path d="M${p2x},${p2y} L${p2x-14},${p2y+20} L${p2x-5},${p2y+16} L${p2x+2},${p2y+24} L${p2x+9},${p2y+15} L${p2x+16},${p2y+19}Z" fill="#fff" opacity=".85"/></svg>`};
+  };
+  const mkFarTree = () => {
+    const h = R(30, 50), t = treeSvg(h);
+    return {cls: 'scn ftree', w: t.w, y: H - 26 - h, html: t.html};
+  };
+  const mkNearTree = () => {
+    const h = R(75, 115), t = treeSvg(h);
+    return {cls: 'scn ntree', w: t.w, y: H - 16 - h, html: t.html};
+  };
+  const mkGround = () => {
+    if (Math.random() < .5) {
+      const w = R(8, 16), h = w * .5;
+      return {cls: 'scn stone', w, y: H - R(6, 18) - h, html:
+        `<svg width="${w}" height="${h}" viewBox="0 0 20 10"><ellipse cx="10" cy="5" rx="10" ry="5" fill="#a8a29e"/><ellipse cx="8" cy="3.5" rx="5" ry="2" fill="#d6d3d1"/></svg>`};
+    }
+    return {cls: 'scn stone', w: 16, y: H - R(6, 18) - 12, html:
+      `<svg width="16" height="12" viewBox="0 0 16 12"><path d="M3,12 L2,3 M8,12 L8,0 M13,12 L15,4" stroke="#4d8f3a" stroke-width="2" stroke-linecap="round" fill="none"/></svg>`};
+  };
+
+  /* một lớp cảnh: các vật nối đuôi nhau trôi sang trái với tốc độ `speed` (px/giây) */
+  function layer(make, speed, gMin, gMax) {
+    let edge = R(-40, 20), t0 = performance.now();
+    const tick = () => {
+      if (!alive()) return;
+      const now = performance.now();
+      edge -= speed * (now - t0) / 1000; t0 = now;
+      while (edge < W + 30) {
+        const it = make();
+        if (edge + it.w > -20) {
+          const e = spawn(it.cls, it.html), to = -it.w - 20;
+          fly(e, [{transform: `translate(${edge}px,${it.y}px)`}, {transform: `translate(${to}px,${it.y}px)`}],
+              (edge - to) / speed * 1000);
+        }
+        edge += it.w + R(gMin, gMax);
+      }
+      setTimeout(tick, 300);
+    };
+    tick();
+  }
 
   /* mây (trôi chậm sang trái theo chiều gió) */
   function cloud(init) {
@@ -644,20 +755,26 @@ function startSky() {
       {transform: `translate(${-w - 20}px,${y + R(-8, 8)}px)`, opacity: 0}
     ], R(1000, 1700));
   }
-  /* bụi dưới chân */
-  function dust(n, big) {
+  /* bụi dưới chân (target: nhân vật cụ thể, bỏ trống = chọn ngẫu nhiên) */
+  function dust(n, big, target) {
     const kids = [...group.children];
-    const c = kids[Math.floor(Math.random() * kids.length)];
+    const c = target || kids[Math.floor(Math.random() * kids.length)];
     for (let i = 0; i < n; i++) {
       const e = spawn('dust'), s = big ? R(10, 18) : R(6, 11);
       e.style.width = e.style.height = s + 'px';
-      const fx = x + (c.offsetLeft + c.offsetWidth * R(.25, .75)) * sc, fy = H - 20;
+      const fx = gx + (c.offsetLeft + c.offsetWidth * R(.25, .75)) * sc, fy = H - 20;
       fly(e, [
         {transform: `translate(${fx}px,${fy}px) scale(.4)`, opacity: .75},
         {transform: `translate(${fx - R(25, 60)}px,${fy - R(big ? 14 : 6, big ? 34 : 20)}px) scale(${R(1.8, 2.8)})`, opacity: 0}
       ], R(700, 1200), {easing: 'ease-out'});
     }
   }
+
+  /* các lớp cảnh: tốc độ px/giây (mây ~15) */
+  layer(mkMountain, 8, 40, 140);      // núi xa: rất chậm
+  layer(mkFarTree, 20, 30, 140);      // cây xa: vừa
+  layer(mkNearTree, 42, 220, 520);    // cây gần: nhanh (bằng tốc độ bước chân)
+  layer(mkGround, 42, 60, 200);       // đá, cỏ trên đường
 
   cloud(true); cloud(true); cloud(true);
   loop(() => cloud(false), 7000, 13000);
@@ -667,16 +784,28 @@ function startSky() {
   loop(() => dust(1, false), 220, 420);
   loop(() => { dust(6, true); gust(); }, 3500, 6500, 2500);   // thỉnh thoảng bụi cuộn lên
 
-  function frame(now) {
-    if (!alive()) return;
-    const dt = Math.min(0.05, (now - last) / 1000); last = now;
-    if (sky.clientWidth !== W) resize();
-    x += SPEED * dt;
-    if (x > W + 20) x = -group.offsetWidth * sc - 10;     // đi hết màn hình thì quay lại từ đầu
-    group.style.transform = `translateX(${x}px) scale(${sc})`;
-    skyRaf = requestAnimationFrame(frame);
-  }
-  skyRaf = requestAnimationFrame(frame);
+  /* ===== Động tác ngẫu nhiên của thầy trò ===== */
+  const wk = group.querySelector('.wk'), hs = group.querySelector('.horse'),
+        bj = group.querySelector('.bj'), st = group.querySelector('.st');
+  let busy = false, lastA = -1;
+  const act = (el, cls, ms, after) => {
+    busy = true; el.classList.add(cls);
+    setTimeout(() => {
+      el.classList.remove(cls); busy = false;
+      if (after && alive()) after();
+    }, ms);
+  };
+  const ACTIONS = [
+    () => act(hs, 'rearing', 2000, () => dust(6, true, hs)),   // ngựa nhảy 2 chân trước lên
+    () => act(bj, 'twirl', 1500),                              // Bát Giới quay cào
+    () => act(st, 'lookback', 2600),                           // Sa Tăng quay đầu nhìn lại
+    () => act(wk, 'hop', 900, () => dust(4, true, wk)),        // Ngộ Không nhảy tưng tưng
+  ];
+  loop(() => {
+    if (busy) return;
+    let i; do { i = Math.floor(Math.random() * ACTIONS.length); } while (i === lastA);
+    lastA = i; ACTIONS[i]();
+  }, 3500, 7000, 2500);
 }
 
 home();
