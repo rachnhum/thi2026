@@ -40,30 +40,46 @@
   .chk{display:flex;gap:8px;align-items:center;margin:10px 0;cursor:pointer}
   .chk input{width:18px;height:18px}
 
-  /* ====== Máy bay kéo cờ ====== */
-  .sky{position:relative;height:230px;overflow:hidden;pointer-events:none;margin-top:6px}
-  .flyer{position:absolute;left:0;top:0;height:60px;display:flex;align-items:center;will-change:transform}
-  .flyer.r{flex-direction:row}
-  .flyer.r .trail{flex-direction:row-reverse}
-  .flyer.l{flex-direction:row-reverse}
-  .flyer.l .trail{flex-direction:row}
-  .trail{display:flex;align-items:center;width:166px}
-  .rope{height:2px;background:#64748b;flex:none}
-  .rope.a{width:14px}
-  .rope.b{width:12px}
-  .banner{flex:none;width:104px;height:28px;display:flex;align-items:center;justify-content:center;
-    background:linear-gradient(#3b82f6,#1d4ed8);color:#fff;font-weight:800;font-size:13px;letter-spacing:.5px;
-    animation:wave .5s ease-in-out infinite alternate}
-  .flyer.r .banner{clip-path:polygon(0 0,100% 0,100% 100%,0 100%,14% 50%)}
-  .flyer.l .banner{clip-path:polygon(0 0,100% 0,86% 50%,100% 100%,0 100%)}
-  .vnflag{flex:none;width:36px;height:24px;background:#da251d;display:flex;align-items:center;justify-content:center;
-    animation:wave .5s ease-in-out .25s infinite alternate}
-  .vnflag i{display:block;width:14px;height:14px;background:#ffff00;
-    clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
-  .plane{flex:none;width:110px;height:59px;overflow:visible}
-  .plane .prop{transform-box:fill-box;transform-origin:center;animation:spin .12s linear infinite}
-  @keyframes spin{50%{transform:scaleY(.15)}}
-  @keyframes wave{from{transform:translateY(-3px) skewY(-4deg)}to{transform:translateY(3px) skewY(4deg)}}
+  /* ====== Thầy trò Đường Tăng đi thỉnh kinh ====== */
+  .sky{position:relative;height:210px;overflow:hidden;pointer-events:none;margin-top:6px;
+    border-radius:12px;background:linear-gradient(#bfdbfe,#eff6ff 70%,#f1f5f9)}
+  .ground{position:absolute;left:0;right:0;bottom:0;height:30px;z-index:1;
+    background:linear-gradient(#bbf7d0,#86efac)}
+  .ground:after{content:"";position:absolute;left:0;right:0;bottom:2px;height:14px;
+    background:#e7d3a8;opacity:.9}
+  .group{position:absolute;left:0;bottom:10px;z-index:2;display:flex;align-items:flex-end;
+    transform-origin:left bottom;will-change:transform}
+  .ch{flex:none;line-height:0}
+  .ch+.ch{margin-left:-6px}
+  .pil{display:block;overflow:visible}
+
+  /* dáng đi */
+  .legA,.legB{transform-box:fill-box;transform-origin:50% 0}
+  .legA{animation:step .36s ease-in-out infinite alternate}
+  .legB{animation:step .36s ease-in-out infinite alternate-reverse}
+  .horse .legA,.horse .legB{animation-duration:.5s}
+  .horse .bob{animation-duration:.5s}
+  @keyframes step{from{transform:rotate(-24deg)}to{transform:rotate(24deg)}}
+  .bob{animation:bob .36s ease-in-out infinite alternate}
+  @keyframes bob{from{transform:translateY(0)}to{transform:translateY(-3px)}}
+  .tail{transform-origin:42px 74px;animation:tail .7s ease-in-out infinite alternate}
+  @keyframes tail{from{transform:rotate(-8deg)}to{transform:rotate(12deg)}}
+  .flag{transform-origin:80px -14px;animation:flap .5s ease-in-out infinite alternate}
+  @keyframes flap{from{transform:skewY(-7deg)}to{transform:skewY(7deg)}}
+  .load{transform-origin:30px 30px;animation:sway .72s ease-in-out infinite alternate}
+  @keyframes sway{from{transform:rotate(-3deg)}to{transform:rotate(3deg)}}
+
+  /* hiệu ứng môi trường */
+  .cloud{position:absolute;left:0;top:0;z-index:0;will-change:transform}
+  .cloud i{position:absolute;background:#fff;border-radius:50%;opacity:.92}
+  .bird{position:absolute;left:0;top:0;z-index:1;line-height:0}
+  .bird path{transform-box:fill-box;transform-origin:center;animation:flapw .3s ease-in-out infinite alternate}
+  @keyframes flapw{from{transform:scaleY(1)}to{transform:scaleY(-.6)}}
+  .gust{position:absolute;left:0;top:0;z-index:3;height:2px;border-radius:2px;background:rgba(100,116,139,.4)}
+  .dust{position:absolute;left:0;top:0;z-index:3;border-radius:50%;background:rgba(168,140,98,.55);
+    filter:blur(1px)}
+  .leaf{position:absolute;left:0;top:0;z-index:4;width:10px;height:6px;border-radius:0 100% 0 100%}
+
    /* ====== Thanh thống kê truy cập ====== */
   .vs-bar{--vs-accent:#2563eb;--vs-bg:#0f172a;--vs-text:#fff;--vs-muted:#94a3b8;
     display:flex;justify-content:center;align-items:center;gap:40px;padding:28px 20px;margin-top:30px;
@@ -187,48 +203,126 @@ async function home() {
   $app.innerHTML = `<div class="card"><h2>Chọn chủ đề</h2><div class="menu" id="list">Đang tải danh sách...</div>
     <button class="sec" onclick="historyScreen()">📜 Lịch sử thi thử</button></div>
     <div class="sky" id="sky">
-      <div class="flyer r">
-        <div class="trail">
-          <div class="rope a"></div>
-          <div class="banner">QLCP BXD</div>
-          <div class="rope b"></div>
-          <div class="vnflag"><i></i></div>
-        </div>
-        <svg class="plane" viewBox="0 0 150 80" xmlns="http://www.w3.org/2000/svg">
-          <!-- đuôi -->
-          <polygon points="34,50 10,26 22,26 50,44" fill="#dc2626"/>
-          <polygon points="22,54 4,58 6,50 26,48" fill="#b91c1c"/>
-          <!-- bánh xe -->
-          <line x1="70" y1="60" x2="66" y2="72" stroke="#475569" stroke-width="3"/>
-          <line x1="100" y1="60" x2="104" y2="72" stroke="#475569" stroke-width="3"/>
-          <circle cx="66" cy="73" r="5" fill="#1e293b"/><circle cx="104" cy="73" r="5" fill="#1e293b"/>
-          <!-- thân -->
-          <ellipse cx="78" cy="50" rx="48" ry="14" fill="#ef4444"/>
-          <path d="M40,52 Q78,60 116,52" fill="none" stroke="#fff" stroke-width="2"/>
-          <rect x="62" y="56" width="46" height="8" rx="4" fill="#f8fafc" stroke="#94a3b8"/>
-          <!-- mũi + cánh quạt -->
-          <circle cx="126" cy="50" r="5" fill="#475569"/>
-          <ellipse class="prop" cx="130" cy="50" rx="3" ry="17" fill="#64748b" opacity=".8"/>
-          <!-- cô phi công -->
-          <circle cx="84" cy="27" r="15" fill="#7c3aed"/>
-          <circle cx="84" cy="29" r="12.5" fill="#fde0c8"/>
-          <path d="M71,24 Q84,14 97,24 Q84,20 71,24Z" fill="#7c3aed"/>
-          <circle cx="79" cy="29" r="5" fill="#fff" stroke="#1e293b" stroke-width="1.5"/>
-          <circle cx="90" cy="29" r="5" fill="#fff" stroke="#1e293b" stroke-width="1.5"/>
-          <line x1="84" y1="29" x2="85" y2="29" stroke="#1e293b" stroke-width="1.5"/>
-          <circle cx="80" cy="29" r="1.8" fill="#1e293b"/><circle cx="91" cy="29" r="1.8" fill="#1e293b"/>
-          <path d="M80,36 Q84.5,40 89,36" fill="none" stroke="#b45309" stroke-width="1.5" stroke-linecap="round"/>
-          <circle cx="74" cy="34" r="2.2" fill="#fca5a5" opacity=".7"/><circle cx="95" cy="34" r="2.2" fill="#fca5a5" opacity=".7"/>
-          <!-- mũ có cánh -->
-          <path d="M70,21 Q70,6 84,6 Q98,6 98,21 Q84,15 70,21Z" fill="#f8fafc" stroke="#94a3b8" stroke-width="1"/>
-          <path d="M70,15 L58,10 L61,20Z" fill="#e2e8f0" stroke="#94a3b8" stroke-width=".8"/>
-          <path d="M98,15 L110,10 L107,20Z" fill="#e2e8f0" stroke="#94a3b8" stroke-width=".8"/>
-          <!-- khăn quàng -->
-          <polygon points="76,42 60,50 66,40" fill="#facc15"/>
-          <ellipse cx="84" cy="41" rx="12" ry="4" fill="#facc15"/>
-        </svg>
-      </div>
-    </div>`;
+  <div class="ground"></div>
+  <div class="group">
+
+    <!-- 4. SA TĂNG (đi sau cùng, gánh hành lý) -->
+    <div class="ch"><svg class="pil" viewBox="0 0 120 112" width="98">
+      <g class="legB"><rect x="62" y="88" width="10" height="16" rx="4" fill="#1e3a8a"/><ellipse cx="68" cy="106" rx="8" ry="4.5" fill="#f8fafc" stroke="#94a3b8"/></g>
+      <g class="legA"><rect x="46" y="88" width="10" height="16" rx="4" fill="#1e3a8a"/><ellipse cx="52" cy="106" rx="8" ry="4.5" fill="#f8fafc" stroke="#94a3b8"/></g>
+      <g class="bob">
+        <g class="load">
+          <path d="M22,30 L8,60 M22,30 L38,60" stroke="#b45309" stroke-width="1.5"/>
+          <rect x="4" y="60" width="38" height="28" rx="2" fill="#7f1d1d" stroke="#450a0a" stroke-width="1.5"/>
+          <path d="M4,68H42M23,60V88" stroke="#450a0a" stroke-width="1.2"/>
+          <line x1="14" y1="28" x2="100" y2="52" stroke="#92400e" stroke-width="3.5" stroke-linecap="round"/>
+          <path d="M100,40 Q116,54 100,68 Q106,54 100,40Z" fill="#64748b"/>
+        </g>
+        <path d="M38,92 Q36,62 60,60 Q84,62 82,92Z" fill="#cbd5e1" stroke="#94a3b8"/>
+        <path d="M39,80 Q60,86 81,80 L82,92 L38,92Z" fill="#1e3a8a"/>
+        <path d="M74,68 Q82,62 80,50" stroke="#cbd5e1" stroke-width="7" stroke-linecap="round" fill="none"/>
+        <circle cx="80" cy="48" r="4.5" fill="#d9a678"/>
+        <circle cx="36" cy="40" r="5" fill="#d9a678"/><circle cx="84" cy="40" r="5" fill="#d9a678"/>
+        <circle cx="60" cy="38" r="24" fill="#d9a678"/>
+        <path d="M37,28 Q60,12 83,28 L83,34 Q60,22 37,34Z" fill="#cbd5e1" stroke="#64748b"/>
+        <path d="M55,21 Q60,28 65,21 Q60,24 55,21Z" fill="#334155"/>
+        <path d="M38,42 Q40,66 60,68 Q80,66 82,42 Q70,56 60,54 Q50,56 38,42Z" fill="#1e293b"/>
+        <circle cx="51" cy="39" r="3.6" fill="#111"/><circle cx="69" cy="39" r="3.6" fill="#111"/>
+        <circle cx="52" cy="38" r="1.1" fill="#fff"/><circle cx="70" cy="38" r="1.1" fill="#fff"/>
+        <path d="M40,64 Q60,86 80,64" stroke="#7f1d1d" stroke-width="6" stroke-dasharray="0 6.5" stroke-linecap="round" fill="none"/>
+      </g>
+    </svg></div>
+
+    <!-- 3. BÁT GIỚI -->
+    <div class="ch"><svg class="pil" viewBox="0 0 100 112" width="82">
+      <g class="legB"><rect x="54" y="90" width="10" height="14" rx="4" fill="#1e293b"/><ellipse cx="60" cy="106" rx="8" ry="4.5" fill="#f8fafc" stroke="#94a3b8"/></g>
+      <g class="legA"><rect x="38" y="90" width="10" height="14" rx="4" fill="#1e293b"/><ellipse cx="44" cy="106" rx="8" ry="4.5" fill="#f8fafc" stroke="#94a3b8"/></g>
+      <g class="bob">
+        <line x1="84" y1="14" x2="84" y2="100" stroke="#92400e" stroke-width="3.5"/>
+        <rect x="72" y="12" width="26" height="4" rx="1" fill="#94a3b8"/>
+        <path d="M74,16V26M80,16V26M88,16V26M94,16V26" stroke="#94a3b8" stroke-width="2.5"/>
+        <path d="M30,92 Q28,62 50,60 Q72,62 70,92Z" fill="#1e293b"/>
+        <rect x="32" y="76" width="36" height="5" fill="#92400e"/>
+        <path d="M66,68 Q76,72 82,72" stroke="#1e293b" stroke-width="7" stroke-linecap="round" fill="none"/>
+        <circle cx="84" cy="72" r="4.5" fill="#f9a8d4"/>
+        <path d="M28,28 L14,36 L30,46Z" fill="#f472b6"/><path d="M72,28 L86,36 L70,46Z" fill="#f472b6"/>
+        <circle cx="50" cy="38" r="24" fill="#f9a8d4" stroke="#ec4899" stroke-width="1"/>
+        <ellipse cx="50" cy="47" rx="11" ry="8" fill="#f472b6"/>
+        <ellipse cx="46" cy="47" rx="1.6" ry="2.6" fill="#9d174d"/><ellipse cx="54" cy="47" rx="1.6" ry="2.6" fill="#9d174d"/>
+        <circle cx="40" cy="38" r="3.6" fill="#111"/><circle cx="60" cy="38" r="3.6" fill="#111"/>
+        <circle cx="41" cy="37" r="1.1" fill="#fff"/><circle cx="61" cy="37" r="1.1" fill="#fff"/>
+        <circle cx="31" cy="46" r="3" fill="#fb7185" opacity=".6"/><circle cx="69" cy="46" r="3" fill="#fb7185" opacity=".6"/>
+        <path d="M26,22 L74,22 L68,2 L32,2Z" fill="#1e293b"/>
+        <rect x="22" y="20" width="56" height="6" rx="3" fill="#0f172a"/>
+        <text x="50" y="17" font-size="11" font-weight="700" text-anchor="middle" fill="#fff">佛</text>
+      </g>
+    </svg></div>
+
+    <!-- 2. ĐƯỜNG TĂNG + NGỰA BẠCH -->
+    <div class="ch horse"><svg class="pil" viewBox="0 0 170 124" width="150">
+      <g class="legB"><rect x="114" y="92" width="8" height="26" rx="3" fill="#e2e8f0" stroke="#cbd5e1"/><ellipse cx="118" cy="119" rx="6" ry="3.5" fill="#475569"/></g>
+      <g class="legB" style="animation-name:step"><rect x="50" y="92" width="8" height="26" rx="3" fill="#e2e8f0" stroke="#cbd5e1"/><ellipse cx="54" cy="119" rx="6" ry="3.5" fill="#475569"/></g>
+      <g class="bob">
+        <g class="tail"><path d="M42,72 Q22,74 20,96 Q30,88 36,90 Q30,80 44,80Z" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/></g>
+        <ellipse cx="82" cy="80" rx="42" ry="22" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
+        <path d="M108,70 Q122,60 124,40 L142,44 Q138,70 120,92Z" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
+        <path d="M130,36 L128,24 L137,33Z" fill="#fff" stroke="#cbd5e1"/>
+        <ellipse cx="144" cy="46" rx="15" ry="10" transform="rotate(25 144 46)" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
+        <ellipse cx="155" cy="52" rx="4" ry="3" fill="#f9a8d4"/>
+        <circle cx="146" cy="42" r="2.6" fill="#111"/>
+        <path d="M136,38 L152,50" stroke="#b91c1c" stroke-width="2"/>
+        <path d="M126,38 Q116,46 120,62 Q112,56 112,44Z" fill="#e2e8f0" stroke="#cbd5e1"/>
+        <path d="M66,62 Q82,56 98,62 L96,70 Q82,66 68,70Z" fill="#b91c1c"/>
+        <!-- Đường Tăng -->
+        <path d="M92,64 Q104,70 106,80" stroke="#b91c1c" stroke-width="7" stroke-linecap="round" fill="none"/>
+        <ellipse cx="107" cy="83" rx="5" ry="3.5" fill="#1e293b"/>
+        <path d="M64,64 Q64,42 82,42 Q100,42 100,64Z" fill="#facc15" stroke="#b45309" stroke-width="1.2"/>
+        <path d="M68,58 L96,50" stroke="#b91c1c" stroke-width="5"/>
+        <circle cx="82" cy="24" r="20" fill="#fcd5b0" stroke="#e8b98f"/>
+        <circle cx="75" cy="29" r="3" fill="#111"/><circle cx="89" cy="29" r="3" fill="#111"/>
+        <circle cx="76" cy="28" r="1" fill="#fff"/><circle cx="90" cy="28" r="1" fill="#fff"/>
+        <circle cx="68" cy="34" r="2.8" fill="#fca5a5" opacity=".7"/><circle cx="96" cy="34" r="2.8" fill="#fca5a5" opacity=".7"/>
+        <path d="M78,35 Q82,39 86,35" stroke="#b45309" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <path d="M62,18 L64,-2 L73,6 L82,-8 L91,6 L100,-2 L102,18Z" fill="#b91c1c" stroke="#facc15" stroke-width="2"/>
+        <rect x="62" y="14" width="40" height="6" rx="2" fill="#facc15"/>
+        <circle cx="82" cy="4" r="3" fill="#facc15"/>
+      </g>
+      <g class="legA"><rect x="104" y="92" width="8" height="26" rx="3" fill="#fff" stroke="#cbd5e1"/><ellipse cx="108" cy="119" rx="6" ry="3.5" fill="#475569"/></g>
+      <g class="legA"><rect x="62" y="92" width="8" height="26" rx="3" fill="#fff" stroke="#cbd5e1"/><ellipse cx="66" cy="119" rx="6" ry="3.5" fill="#475569"/></g>
+    </svg></div>
+
+    <!-- 1. TÔN NGỘ KHÔNG (đi đầu, cầm gậy + cờ QLCP BXD) -->
+    <div class="ch"><svg class="pil" viewBox="0 0 100 112" width="82">
+      <g class="legB"><rect x="54" y="88" width="10" height="16" rx="4" fill="#facc15" stroke="#b45309"/><path d="M54,95H64" stroke="#1e293b" stroke-width="3"/><rect x="55" y="101" width="9" height="4" fill="#fff"/><ellipse cx="61" cy="106" rx="8" ry="4.5" fill="#1e293b"/></g>
+      <g class="legA"><rect x="38" y="88" width="10" height="16" rx="4" fill="#facc15" stroke="#b45309"/><path d="M38,95H48" stroke="#1e293b" stroke-width="3"/><rect x="39" y="101" width="9" height="4" fill="#fff"/><ellipse cx="45" cy="106" rx="8" ry="4.5" fill="#1e293b"/></g>
+      <g class="bob">
+        <line x1="80" y1="-28" x2="80" y2="102" stroke="#dc2626" stroke-width="3.5"/>
+        <rect x="77" y="-31" width="6" height="6" rx="2" fill="#facc15"/>
+        <g class="flag">
+          <path d="M80,-26 L18,-26 L26,-14 L18,-2 L80,-2Z" fill="#2563eb"/>
+          <text x="52" y="-11" font-size="9" font-weight="800" text-anchor="middle" fill="#fff" letter-spacing=".5">QLCP BXD</text>
+        </g>
+        <rect x="33" y="62" width="34" height="30" rx="11" fill="#facc15" stroke="#b45309" stroke-width="1.2"/>
+        <path d="M34,74H66M34,82H66" stroke="#1e293b" stroke-width="3"/>
+        <path d="M36,60 Q50,72 64,60 L60,70 Q50,78 40,70Z" fill="#b91c1c"/>
+        <path d="M34,64 L26,80 L33,78Z" fill="#b91c1c"/>
+        <path d="M64,66 Q73,70 78,70" stroke="#facc15" stroke-width="7" stroke-linecap="round" fill="none"/>
+        <circle cx="80" cy="70" r="5" fill="#c67c35"/>
+        <circle cx="27" cy="44" r="7" fill="#c67c35"/><circle cx="73" cy="44" r="7" fill="#c67c35"/>
+        <circle cx="50" cy="38" r="25" fill="#c67c35"/>
+        <ellipse cx="50" cy="44" rx="19" ry="16" fill="#fcd5b0"/>
+        <path d="M25,38 Q25,10 50,10 Q75,10 75,38 Q63,26 50,29 Q37,26 25,38Z" fill="#facc15" stroke="#b45309" stroke-width="1.5"/>
+        <text x="50" y="25" font-size="13" font-weight="700" text-anchor="middle" fill="#1e293b">佛</text>
+        <path d="M36,38 L45,40 M64,38 L55,40" stroke="#7c2d12" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="41" cy="45" r="3.6" fill="#111"/><circle cx="59" cy="45" r="3.6" fill="#111"/>
+        <circle cx="42" cy="44" r="1.1" fill="#fff"/><circle cx="60" cy="44" r="1.1" fill="#fff"/>
+        <circle cx="35" cy="51" r="3" fill="#fca5a5" opacity=".7"/><circle cx="65" cy="51" r="3" fill="#fca5a5" opacity=".7"/>
+        <path d="M46,52 Q50,56 54,52" stroke="#b45309" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      </g>
+    </svg></div>
+
+  </div>
+</div>`;
   startSky();
   let files = FILES;
   if (!files.length) files = await autoList();
@@ -471,60 +565,115 @@ function showResult() {
     </div></div>`;
 }
 
-/* ---------- Máy bay kéo cờ ---------- */
-let skyRaf = null;
+/* ---------- Thầy trò Đường Tăng đi thỉnh kinh ---------- */
+let skyRaf = null, skyToken = 0;
 function startSky() {
   cancelAnimationFrame(skyRaf);
+  const token = ++skyToken;
   const sky = document.getElementById('sky');
   if (!sky) return;
-  const fl = sky.querySelector('.flyer'), plane = fl.querySelector('.plane');
-  const LANES = [45, 90, 135, 180];   // độ cao 4 làn bay
-  const SPEED = 140;                  // px/giây
-  const TRAIL = 166, HALF = 55;       // chiều dài cờ, nửa thân máy bay
-  let W = 0, pts = [], cum = [], total = 0, dist = 0, last = performance.now(), dir = 0;
+  const group = sky.querySelector('.group');
+  const alive = () => token === skyToken && document.body.contains(sky);
+  const R = (a, b) => a + Math.random() * (b - a);
+  const SPEED = 42;                       // px/giây: tốc độ đoàn đi (tăng/giảm tùy ý)
+  let W = 0, H = 0, sc = 1, x = 0, last = performance.now();
+  const resize = () => { W = sky.clientWidth; H = sky.clientHeight; sc = W < 520 ? 0.75 : 1; };
+  resize();
+  x = -group.offsetWidth * sc - 10;
 
-  function build() {
-    const xl = 20, xr = W - 20, rx = 40;
-    pts = [[W + 120, LANES[0]], [xl, LANES[0]]];
-    const turn = (x, s, y1, y2) => {
-      const r = (y2 - y1) / 2, cy = (y1 + y2) / 2;
-      for (let k = 1; k <= 24; k++) {
-        const th = k / 24 * Math.PI;
-        pts.push([x + s * rx * Math.sin(th), cy - r * Math.cos(th)]);
-      }
+  const spawn = (cls, html) => {
+    const e = document.createElement('div');
+    e.className = cls; if (html) e.innerHTML = html;
+    sky.appendChild(e); return e;
+  };
+  const fly = (e, frames, dur, opts) => {
+    const a = e.animate(frames, Object.assign({duration: dur, easing: 'linear', fill: 'forwards'}, opts));
+    a.onfinish = () => e.remove();
+  };
+  const loop = (fn, min, max, first) => {
+    const run = () => {
+      if (!alive()) return;
+      if (!document.hidden) fn();
+      setTimeout(run, R(min, max));
     };
-    turn(xl, -1, LANES[0], LANES[1]); pts.push([xr, LANES[1]]);
-    turn(xr, +1, LANES[1], LANES[2]); pts.push([xl, LANES[2]]);
-    turn(xl, -1, LANES[2], LANES[3]); pts.push([W + 330, LANES[3]]);
-    cum = [0];
-    for (let i = 1; i < pts.length; i++)
-      cum.push(cum[i-1] + Math.hypot(pts[i][0]-pts[i-1][0], pts[i][1]-pts[i-1][1]));
-    total = cum[cum.length - 1];
+    setTimeout(run, first == null ? R(min, max) : first);
+  };
+
+  /* mây (trôi chậm sang trái theo chiều gió) */
+  function cloud(init) {
+    const w = R(60, 110);
+    const e = spawn('cloud',
+      `<i style="left:0;top:${w*.2}px;width:${w*.5}px;height:${w*.3}px"></i>
+       <i style="left:${w*.2}px;top:0;width:${w*.5}px;height:${w*.4}px"></i>
+       <i style="left:${w*.45}px;top:${w*.18}px;width:${w*.55}px;height:${w*.3}px"></i>`);
+    const y = R(8, 70), from = init ? R(0, W) : W + 20, full = R(35000, 55000);
+    fly(e, [{transform: `translate(${from}px,${y}px)`}, {transform: `translate(${-w-20}px,${y}px)`}],
+        full * (from + w + 20) / (W + w + 40));
+  }
+  /* chim bay ngang qua */
+  function bird() {
+    const toLeft = Math.random() < .5;
+    const e = spawn('bird', `<svg viewBox="0 0 26 12" width="26" height="12"><path d="M1,8 Q7,-2 13,7 Q19,-2 25,8" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round"/></svg>`);
+    const x0 = toLeft ? W + 30 : -40, x1 = toLeft ? -40 : W + 30;
+    const y = R(10, 80), a = R(4, 14), fr = [];
+    for (let i = 0; i <= 6; i++) {
+      const t = i / 6;
+      fr.push({transform: `translate(${x0 + (x1 - x0) * t}px,${y + Math.sin(t * 9.4) * a}px)`});
+    }
+    fly(e, fr, R(7000, 12000));
+  }
+  /* lá cây bay trong gió */
+  function leaf() {
+    const e = spawn('leaf');
+    e.style.background = ['#16a34a', '#65a30d', '#ca8a04', '#b45309'][Math.floor(Math.random() * 4)];
+    const y0 = R(15, H - 70), amp = R(10, 28), ph = R(0, 6.28), drift = R(-10, 50), spin = R(360, 900), fr = [];
+    for (let i = 0; i <= 8; i++) {
+      const t = i / 8;
+      const y = Math.min(H - 32, y0 + drift * t + amp * Math.sin(t * 9 + ph));
+      fr.push({transform: `translate(${W + 20 - (W + 60) * t}px,${y}px) rotate(${spin * t}deg)`});
+    }
+    fly(e, fr, R(4500, 8000));
+  }
+  /* vệt gió */
+  function gust() {
+    const w = R(40, 110), e = spawn('gust'), y = R(10, H - 50);
+    e.style.width = w + 'px';
+    fly(e, [
+      {transform: `translate(${W + 20}px,${y}px)`, opacity: 0},
+      {opacity: .8, offset: .2}, {opacity: .8, offset: .8},
+      {transform: `translate(${-w - 20}px,${y + R(-8, 8)}px)`, opacity: 0}
+    ], R(1000, 1700));
+  }
+  /* bụi dưới chân */
+  function dust(n, big) {
+    const kids = [...group.children];
+    const c = kids[Math.floor(Math.random() * kids.length)];
+    for (let i = 0; i < n; i++) {
+      const e = spawn('dust'), s = big ? R(10, 18) : R(6, 11);
+      e.style.width = e.style.height = s + 'px';
+      const fx = x + (c.offsetLeft + c.offsetWidth * R(.25, .75)) * sc, fy = H - 20;
+      fly(e, [
+        {transform: `translate(${fx}px,${fy}px) scale(.4)`, opacity: .75},
+        {transform: `translate(${fx - R(25, 60)}px,${fy - R(big ? 14 : 6, big ? 34 : 20)}px) scale(${R(1.8, 2.8)})`, opacity: 0}
+      ], R(700, 1200), {easing: 'ease-out'});
+    }
   }
 
+  cloud(true); cloud(true); cloud(true);
+  loop(() => cloud(false), 7000, 13000);
+  loop(bird, 5000, 9000, 1500);
+  loop(leaf, 700, 1600, 300);
+  loop(gust, 1800, 3500, 600);
+  loop(() => dust(1, false), 220, 420);
+  loop(() => { dust(6, true); gust(); }, 3500, 6500, 2500);   // thỉnh thoảng bụi cuộn lên
+
   function frame(now) {
-    if (!document.body.contains(sky)) return;        // đã rời màn hình chủ đề
-    const w = sky.clientWidth;
-    if (w !== W) { const ratio = total ? dist / total : 0; W = w; build(); dist = ratio * total; }
+    if (!alive()) return;
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
-    dist += SPEED * dt;
-    if (dist >= total) dist -= total;                // hết làn 4 -> bay lại từ đầu
-
-    let i = 1;
-    while (i < cum.length - 1 && cum[i] < dist) i++;
-    const a = pts[i-1], b = pts[i];
-    const t = (dist - cum[i-1]) / ((cum[i] - cum[i-1]) || 1);
-    const x = a[0] + (b[0]-a[0]) * t, y = a[1] + (b[1]-a[1]) * t;
-    const dx = b[0]-a[0], dy = b[1]-a[1];
-
-    if (Math.abs(dx) > 0.001) {
-      const nd = dx > 0 ? 1 : -1;
-      if (nd !== dir) { dir = nd; fl.className = 'flyer ' + (dir === 1 ? 'r' : 'l'); }
-    }
-    const tilt = Math.atan2(dy, Math.abs(dx) || 1) * 180 / Math.PI * 0.6;
-    plane.style.transform = `scaleX(${dir || 1}) rotate(${tilt}deg)`;
-    const anchor = dir === 1 ? TRAIL + HALF : HALF;
-    fl.style.transform = `translate(${x - anchor}px, ${y - 30}px)`;
+    if (sky.clientWidth !== W) resize();
+    x += SPEED * dt;
+    if (x > W + 20) x = -group.offsetWidth * sc - 10;     // đi hết màn hình thì quay lại từ đầu
+    group.style.transform = `translateX(${x}px) scale(${sc})`;
     skyRaf = requestAnimationFrame(frame);
   }
   skyRaf = requestAnimationFrame(frame);
