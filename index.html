@@ -127,11 +127,11 @@ const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;
 const shuffle = a => { a = [...a]; for (let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
 const catKey = s => {
   s = String(s||"").toLowerCase().trim();
-  if (s.includes("nghị quyết")) return "nq";
-  if (s.includes("nhiệm vụ")) return "nv";
-  if (s.includes("kiến thức")) return "kt";
-  if (s.includes("quy định") || s.includes("quy chế")) return "qd";
-  if (s.includes("chuyên môn")) return "cm";
+  if (s.includes("nghi quyet")) return "nq";
+  if (s.includes("nhiem vu")) return "nv";
+  if (s.includes("kien thuc chung")) return "kt";
+  if (s.includes("quy dinh") || s.includes("quy chế")) return "qd";
+  if (s.includes("chuyen mon")) return "cm";
   return "other:" + s;
 };
 const CULTURE = ["nq","nv","kt","qd"];
