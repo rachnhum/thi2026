@@ -937,7 +937,7 @@ function startSky() {
 
   function flyby() {
     const r = Math.random();
-    const type = r < 0.1 ? 'rocket' : (r < 0.35 ? 'boeing' : 'heli');   // 5% – 30% – 65% (giữ nguyên)
+    const type = r < 0.15 ? 'rocket' : (r < 0.35 ? 'boeing' : 'heli');   // 15% – 30% – 55% (giữ nguyên)
     const svg = {rocket: SVG_ROCKET, boeing: SVG_BOEING, heli: SVG_HELI}[type];
     const e = spawn('air ' + type, svg);
     const w = e.offsetWidth || 40;
