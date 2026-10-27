@@ -181,21 +181,25 @@
    - file : tên file Excel (đúng từng ký tự, kể cả đuôi .xlsx)
    - pass : mật khẩu (không muốn khóa thì bỏ dòng pass hoặc để "")
    - desc : dòng diễn giải nhỏ dưới tên (không bắt buộc)
-   Các mục Ôn luyện / Thi thử sẽ tự xuất hiện theo loại câu hỏi có trong file (cột A):
-   nghi quyet, nhiem vu, kien thuc chung, quy dinh, chuyen mon, chuyen mon 25 ... */
+   - type : loại hình  ->  1 = Văn hóa  |  2 = Chuyên môn
+            (bỏ trống thì web tự đoán theo nội dung file)
+   Loại 1 (Văn hóa): cột A gồm nghi quyet, nhiem vu, kien thuc chung, quy dinh
+   Loại 2 (Chuyên môn): cột A gồm  "chuyen mon" (câu hỏi 2026)  và  "chuyen mon 25" (câu hỏi cũ) */
 const TOPICS = [
-  {file: "van hoa full.xlsx", pass: "1234", desc: "17x câu thi thử và sưu tầm ko rõ nguồn gốc"},
-  {file: "chuyen mon QLCP-XD.xlsx", pass: "88888"},
+  {file: "van hoa full.xlsx", pass: "1234", desc: "17x câu thi thử và sưu tầm ko rõ nguồn gốc", type: 1},
+  {file: "chuyen mon QLCP-XD.xlsx", pass: "88888", type: 2},
 ];
 // Nếu để TOPICS trống [], web sẽ tự dò các file .xlsx trong repo qua GitHub API (chỉ chạy khi host trên github.io).
 
 /* ---- Phần dưới tự suy ra từ TOPICS, không cần sửa ---- */
 const FILES = TOPICS.map(t => t.file);
-const LOCKS = {}, DESCS = {};
+const LOCKS = {}, DESCS = {}, TYPES = {};
 TOPICS.forEach(t => {
   if (t.pass) LOCKS[t.file] = String(t.pass);
   if (t.desc) DESCS[t.file] = t.desc;
+  if (Number(t.type) === 1 || Number(t.type) === 2) TYPES[t.file] = Number(t.type);
 });
+const TYPE_LABEL = {1: "Văn hóa", 2: "Chuyên môn"};
 
 const EXAM_MINUTES = 60;
 const TOTAL = 40;
@@ -203,11 +207,12 @@ const DEFAULT_QUOTA = {nq:14, nv:12, kt:8, qd:6};
 const QUOTA_LABEL = {nq:"Nghị quyết", nv:"Nhiệm vụ", kt:"Kiến thức chung", qd:"Quy định, quy chế"};
 const TECH_KEYS = ["cm", "cm25"];   // các loại chuyên môn (trộn được với nhau khi thi)
 const EXAM_LABEL = {
-  cm: "Thi chuyên môn",
-  cm25: "Thi chuyên môn 25",
-  mix: "Thi chuyên môn (mix 2 loại)",
+  cm: "Thi chuyên môn – 40 câu mới 2026",
+  cm25: "Thi chuyên môn – câu hỏi cũ",
+  mix: "Thi chuyên môn – 40 câu từ tất cả (2026 + cũ)",
   vh: "Thi văn hóa"
 };
+const PRACTICE_LABEL = {cm: "Ôn luyện chuyên môn – câu hỏi 2026", cm25: "Ôn luyện chuyên môn – câu hỏi cũ"};
 const HISTORY_KEY = "thi_history_v1";
 const SHUFFLE_KEY = "thi_shuffle_opts";
 const HISTORY_MAX = 100;
@@ -232,6 +237,7 @@ const PRIZE_MSG = "Chúc mừng bạn đã rất may mắn khi bắn được t�
 const $app = document.getElementById('app');
 let data = [];
 let fileName = "";
+let topicType = 1;      // 1 = văn hóa, 2 = chuyên môn (của file đang mở)
 let session = null;
 let timerId = null;
 let shuffleOpts = localStorage.getItem(SHUFFLE_KEY) !== "0";   // mặc định BẬT
@@ -254,6 +260,7 @@ const catKey = s => {
 const CULTURE = ["nq","nv","kt","qd"];
 const fmtScore = n => (Math.round(n*100)/100).toString().replace('.', ',');
 const fmtTime = sec => `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
+const countKey = k => data.filter(d => d.key === k).length;
 
 /* ---------- Lịch sử (localStorage) ---------- */
 function getHistory() {
@@ -438,7 +445,8 @@ async function home() {
     const b = document.createElement('button');
     const locked = !!LOCKS[f];
     const title = (locked ? "🔒 " : "📂 ") + f.replace(/\.xlsx?$/i, "");
-    b.innerHTML = esc(title) + (DESCS[f] ? `<br><span class="muted">${esc(DESCS[f])}</span>` : "");
+    const sub = [TYPES[f] ? TYPE_LABEL[TYPES[f]] : "", DESCS[f]].filter(Boolean).join(" • ");
+    b.innerHTML = esc(title) + (sub ? `<br><span class="muted">${esc(sub)}</span>` : "");
     b.onclick = () => openTopic(f);
     list.appendChild(b);
   });
@@ -467,6 +475,10 @@ async function autoList() {
 }
 
 /* ---------- Đọc Excel ---------- */
+// Ô số -> chuỗi gọn (tránh 0.55000000000000004); bỏ dấu * đánh dấu đáp án đúng trong file
+const cellStr = v => typeof v === "number" ? String(Math.round(v * 1e10) / 1e10) : String(v ?? "");
+const cleanOpt = v => cellStr(v).replace(/\*/g, "").replace(/\s+/g, " ").trim();
+
 async function loadFile(f) {
   $app.innerHTML = `<div class="card">Đang tải "${esc(f)}"...</div>`;
   try {
@@ -483,15 +495,25 @@ async function loadFile(f) {
     if (typeof XLSX === "undefined")
       throw new Error("Thư viện đọc Excel không tải được. Kiểm tra mạng hoặc thử mạng khác.");
     const wb = XLSX.read(await res.arrayBuffer(), {type: "array"});
-    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1, defval: ""});
-    data = rows.slice(1).filter(r => r[1] && String(r[6]).trim() !== "").map(r => ({
+
+    // Đọc mọi sheet có dòng tiêu đề bắt đầu bằng "Loại" (cột A). Không có thì dùng sheet đầu tiên.
+    const all = wb.SheetNames.map(n => XLSX.utils.sheet_to_json(wb.Sheets[n], {header: 1, defval: ""}));
+    let picked = all.filter(r => r.length && normText((r[0] || [])[0]) === "loai");
+    if (!picked.length) picked = [all[0] || []];
+    const rows = [];
+    picked.forEach(r => r.slice(1).forEach(x => rows.push(x)));
+
+    data = rows.filter(r => r[1] && String(r[6]).trim() !== "").map(r => ({
       cat: String(r[0]).trim(), key: catKey(r[0]),
-      q: String(r[1]), opts: [r[2], r[3], r[4], r[5]].map(String),
+      q: cellStr(r[1]).trim(), opts: [r[2], r[3], r[4], r[5]].map(cleanOpt),
       ans: parseInt(r[6]) - 1
-    }));
+    })).filter(d => d.ans >= 0 && d.ans < 4);
     if (!data.length)
       throw new Error("Đọc được file nhưng không có câu hỏi hợp lệ. Kiểm tra cột câu hỏi và cột trả lời.");
+
     fileName = f.replace(/\.xlsx?$/i, "");
+    // loại hình: ưu tiên khai báo trong TOPICS, không có thì tự đoán theo nội dung
+    topicType = TYPES[f] || (data.some(d => CULTURE.includes(d.key)) ? 1 : 2);
     modeMenu();
   } catch (e) {
     $app.innerHTML = `<div class="card"><b>Không tải được file.</b><br>
@@ -503,7 +525,7 @@ async function loadFile(f) {
 /* ---------- Màn hình 2: Ôn luyện / Thi thử ---------- */
 function modeMenu() {
   $app.innerHTML = `<div class="card"><h2>${esc(fileName)}</h2>
-    <p class="muted">${data.length} câu hỏi</p>
+    <p class="muted">${TYPE_LABEL[topicType]} • ${data.length} câu hỏi</p>
     <label class="chk"><input type="checkbox" id="shufOpt" ${shuffleOpts?"checked":""} onchange="setShuffle(this.checked)">
       Xáo trộn thứ tự đáp án A/B/C/D</label>
     <div class="menu">
@@ -514,53 +536,68 @@ function modeMenu() {
 function setShuffle(v) { shuffleOpts = v; localStorage.setItem(SHUFFLE_KEY, v ? "1" : "0"); }
 
 /* ---------- 2.1 Ôn luyện ---------- */
-// Mỗi loại câu hỏi có trong file (cột A) tự thành 1 nút riêng: "chuyen mon", "chuyen mon 25", ...
 function practiceMenu() {
-  const seen = new Map();
-  data.forEach(d => { if (!seen.has(d.key)) seen.set(d.key, d.cat); });
   let html = `<div class="card"><h2>Ôn luyện – chọn phần</h2><div class="menu">`;
-  const hasCulture = CULTURE.some(k => seen.has(k));
-  if (hasCulture) html += `<button onclick="startPractice('culture')">🎓 Văn hóa (nghị quyết + nhiệm vụ + kiến thức chung + quy định, quy chế)</button>`;
-  seen.forEach((label, key) => {
-    const n = data.filter(d => d.key === key).length;
-    html += `<button onclick="startPractice('${esc(key).replace(/'/g,"\\'")}')">${esc(label)} <span class="muted">(${n} câu)</span></button>`;
-  });
+
+  if (topicType === 2) {
+    // CHUYÊN MÔN: câu hỏi 2026 ("chuyen mon") và câu hỏi cũ ("chuyen mon 25")
+    const n26 = countKey('cm'), nOld = countKey('cm25');
+    if (n26) html += `<button onclick="startPractice('cm')">📘 Câu hỏi 2026 <span class="muted">(${n26} câu)</span></button>`;
+    if (nOld) html += `<button onclick="startPractice('cm25')">📕 Câu hỏi cũ <span class="muted">(${nOld} câu)</span></button>`;
+    if (!n26 && !nOld) html += `<p class="muted">File này chưa có câu hỏi loại "chuyen mon" hoặc "chuyen mon 25" ở cột A.</p>`;
+  } else {
+    // VĂN HÓA: mỗi loại câu hỏi có trong file (cột A) tự thành 1 nút riêng
+    const seen = new Map();
+    data.forEach(d => { if (!seen.has(d.key)) seen.set(d.key, d.cat); });
+    const hasCulture = CULTURE.some(k => seen.has(k));
+    if (hasCulture) html += `<button onclick="startPractice('culture')">🎓 Văn hóa (nghị quyết + nhiệm vụ + kiến thức chung + quy định, quy chế)</button>`;
+    seen.forEach((label, key) => {
+      const n = countKey(key);
+      html += `<button onclick="startPractice('${esc(key).replace(/'/g,"\\'")}')">${esc(label)} <span class="muted">(${n} câu)</span></button>`;
+    });
+  }
+
   html += `</div><button class="sec" onclick="modeMenu()">← Quay lại</button></div>`;
   $app.innerHTML = html;
 }
 function startPractice(key) {
   const pool = key === 'culture' ? data.filter(d => CULTURE.includes(d.key)) : data.filter(d => d.key === key);
-  const label = key === 'culture' ? "Ôn luyện văn hóa" : "Ôn luyện " + (pool[0]?.cat || "");
+  const label = key === 'culture' ? "Ôn luyện văn hóa" : (PRACTICE_LABEL[key] || "Ôn luyện " + (pool[0]?.cat || ""));
   begin(shuffle(pool), 'practice', label);
 }
 
 /* ---------- 2.2 Thi thử ---------- */
 function examMenu() {
-  const has = k => data.some(d => d.key === k);
-  const hasCm = has('cm'), hasCm25 = has('cm25'), hasCulture = CULTURE.some(has);
-  const nCm = data.filter(d => d.key === 'cm').length, nCm25 = data.filter(d => d.key === 'cm25').length;
   let html = `<div class="card"><h2>Thi thử</h2>
     <p class="muted">Mỗi đề ${TOTAL} câu – ${EXAM_MINUTES} phút.</p>`;
 
-  if (hasCm || hasCm25) {
-    html += `<h3>🔧 Thi chuyên môn</h3><div class="menu">`;
-    if (hasCm) html += `<button onclick="startExam('cm')">🔧 ${TOTAL} câu toàn chuyên môn <span class="muted">(${nCm} câu trong ngân hàng)</span></button>`;
-    if (hasCm && hasCm25) html += `<button onclick="startExam('mix')">🔀 ${TOTAL} câu mix chuyên môn + chuyên môn 25 <span class="muted">(${nCm + nCm25} câu trong ngân hàng)</span></button>`;
-    if (!hasCm && hasCm25) html += `<button onclick="startExam('cm25')">🔧 ${TOTAL} câu chuyên môn 25 <span class="muted">(${nCm25} câu trong ngân hàng)</span></button>`;
-    html += `</div>`;
+  if (topicType === 2) {
+    // CHUYÊN MÔN
+    const nCm = countKey('cm'), nCm25 = countKey('cm25');
+    if (nCm || nCm25) {
+      html += `<h3>🔧 Thi chuyên môn</h3><div class="menu">`;
+      if (nCm) html += `<button onclick="startExam('cm')">🎲 ${TOTAL} câu ngẫu nhiên – câu hỏi mới 2026 <span class="muted">(${nCm} câu trong ngân hàng)</span></button>`;
+      if (nCm && nCm25) html += `<button onclick="startExam('mix')">🔀 ${TOTAL} câu ngẫu nhiên – tất cả câu hỏi (2026 + cũ) <span class="muted">(${nCm + nCm25} câu trong ngân hàng)</span></button>`;
+      if (!nCm && nCm25) html += `<button onclick="startExam('cm25')">🎲 ${TOTAL} câu ngẫu nhiên – câu hỏi cũ <span class="muted">(${nCm25} câu trong ngân hàng)</span></button>`;
+      html += `</div>`;
+    } else {
+      html += `<p class="muted">File này chưa có câu hỏi loại "chuyen mon" hoặc "chuyen mon 25" ở cột A.</p>`;
+    }
+  } else {
+    // VĂN HÓA
+    const has = k => data.some(d => d.key === k);
+    const hasCulture = CULTURE.some(has);
+    if (hasCulture) {
+      html += `<h3>🎓 Thi văn hóa – số câu mỗi loại</h3>
+      <div class="quota">
+        ${CULTURE.filter(has).map(k=>`<label>${QUOTA_LABEL[k]}<input type="number" min="0" id="q_${k}" placeholder="${DEFAULT_QUOTA[k]}"></label>`).join("")}
+      </div>
+      <p class="muted">Để trống sẽ dùng mặc định 14 – 12 – 8 – 6.</p>
+      <button onclick="startExam('vh')">Bắt đầu thi văn hóa</button>`;
+    } else {
+      html += `<p class="muted">File này chưa có loại câu hỏi nào để thi thử (cột A cần có: nghi quyet, nhiem vu, kien thuc chung, quy dinh).</p>`;
+    }
   }
-
-  if (hasCulture) {
-    html += `<h3>🎓 Thi văn hóa – số câu mỗi loại</h3>
-    <div class="quota">
-      ${CULTURE.filter(has).map(k=>`<label>${QUOTA_LABEL[k]}<input type="number" min="0" id="q_${k}" placeholder="${DEFAULT_QUOTA[k]}"></label>`).join("")}
-    </div>
-    <p class="muted">Để trống sẽ dùng mặc định 14 – 12 – 8 – 6.</p>
-    <button onclick="startExam('vh')">Bắt đầu thi văn hóa</button>`;
-  }
-
-  if (!hasCm && !hasCm25 && !hasCulture)
-    html += `<p class="muted">File này chưa có loại câu hỏi nào để thi thử (cột A cần có: nghi quyet, nhiem vu, kien thuc chung, quy dinh, chuyen mon, chuyen mon 25).</p>`;
 
   html += ` <button class="sec" onclick="modeMenu()">← Quay lại</button></div>`;
   $app.innerHTML = html;
@@ -580,7 +617,7 @@ function startExam(type) {
       picked.push(...shuffle(pool).slice(0, want));
     });
   } else {
-    // 'cm' = toàn chuyên môn | 'cm25' = toàn chuyên môn 25 | 'mix' = trộn ngẫu nhiên cả hai
+    // 'cm' = 40 câu từ câu hỏi mới 2026 | 'cm25' = 40 câu từ câu hỏi cũ | 'mix' = 40 câu từ tất cả
     const keys = type === 'mix' ? TECH_KEYS : [type];
     const pool = data.filter(d => keys.includes(d.key));
     if (pool.length < TOTAL) warn.push(`${EXAM_LABEL[type]} chỉ có ${pool.length}/${TOTAL} câu.`);
