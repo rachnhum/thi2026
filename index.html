@@ -216,7 +216,7 @@ const WARN_MSGS = [
   "Bắn máy bay là vui thôi, còn giải thật nằm ở chỗ khác đó!"
 ];
 const WARN_NOTE = "Lưu ý: chỉ bắn trúng TÊN LỬA mới nhận được giải lớn!";
-const PRIZE_MSG = "Chúc mừng bạn đã trúng giải đặc biệt, vui lòng liên hệ QLCP Thủ Đô nhận quà";
+const PRIZE_MSG = "Chúc mừng bạn đã rất may mắn khi bắn được tên lửa! Nhưng lo mà ôn thi đi chứ, sao rảnh đến mức chơi cái game vô tri này? Chúc bạn thi tốt he he 😜";
 /* ============================================ */
 
 const $app = document.getElementById('app');
@@ -680,21 +680,12 @@ function showWarnPopup() {
     <div class="note">${esc(WARN_NOTE)}</div>
     <button data-close>Đóng</button></div>`, 8000);
 }
-// Trúng tên lửa: giải đặc biệt kèm mã xác nhận + ngày giờ, KHÔNG tự tắt (để kịp chụp màn hình)
+// Trúng tên lửa: lời chúc vui, nhắc đi ôn thi
 function showPrizePopup() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";   // bỏ các ký tự dễ nhầm: I, O, 0, 1
-  let code = "";
-  for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
-  code = "QLCP-" + code;
-  const d = new Date(), p = n => String(n).padStart(2, '0');
-  const when = `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())} - ${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()}`;
   openPopup(`<div class="pop prize">
-    <div class="big">🎉🏆🎉</div>
+    <div class="big">🎉🚀🎉</div>
     <div class="msg">${esc(PRIZE_MSG)}</div>
-    <div class="code">${esc(code)}</div>
-    <div class="when">${esc(when)}</div>
-    <div class="when">Hãy chụp màn hình popup này để đối chiếu khi nhận quà.</div>
-    <button data-close>Đóng</button></div>`, 0);
+    <button data-close>Đi ôn thi thôi!</button></div>`, 0);
 }
 
 /* ---------- Thầy trò Đường Tăng đi thỉnh kinh ---------- */
