@@ -143,6 +143,27 @@
   .pop .when{font-size:13px;color:#64748b;margin-bottom:12px}
   .pop button{min-width:110px}
 
+  /* ====== Chọc Bát Giới hóa điên ====== */
+  .bj{pointer-events:auto;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+  .bj.poke .pil{animation:poke .25s ease-out}
+  @keyframes poke{0%{transform:scale(1)}30%{transform:scale(.88,1.1) rotate(-6deg)}60%{transform:scale(1.08,.94) rotate(5deg)}100%{transform:scale(1)}}
+  .bubble{position:absolute;left:0;top:0;z-index:10;background:#fff;border:2px solid #334155;border-radius:10px;
+    padding:2px 8px;font-size:13px;font-weight:700;white-space:nowrap;pointer-events:none;color:#1e293b}
+  .bubble.big{font-size:20px;color:#dc2626;border-color:#dc2626}
+
+  /* hóa điên: phình to, đỏ rực, rung lắc, cào quay tít */
+  .bj.rage{position:relative;z-index:20;animation:rageShake .07s linear infinite alternate}
+  @keyframes rageShake{from{transform:translate(-2px,0)}to{transform:translate(2px,-2px)}}
+  .bj.rage .pil{transform-origin:50% 100%;animation:grow 1.7s ease-in forwards;
+    filter:saturate(2.5) hue-rotate(-25deg) drop-shadow(0 0 8px #ef4444)}
+  @keyframes grow{0%{transform:scale(1)}50%{transform:scale(1.6)}100%{transform:scale(2.1)}}
+  .bj.rage .rake{animation:twirl .45s linear infinite}
+
+  /* khói bụi */
+  .smoke{position:absolute;left:0;top:0;z-index:9;border-radius:50%;pointer-events:none;filter:blur(3px);
+    background:radial-gradient(circle,rgba(120,113,108,.95),rgba(168,162,158,.8) 55%,rgba(214,211,209,0) 72%)}
+  .haze{position:absolute;inset:0;z-index:9;pointer-events:none;background:#a8a29e}
+
    /* ====== Thanh thống kê truy cập ====== */
   .vs-bar{--vs-accent:#2563eb;--vs-bg:#0f172a;--vs-text:#fff;--vs-muted:#94a3b8;
     display:flex;justify-content:center;align-items:center;gap:40px;padding:28px 20px;margin-top:30px;
@@ -1060,7 +1081,7 @@ function startSky() {
   /* ===== Động tác ngẫu nhiên của thầy trò ===== */
   const wk = group.querySelector('.wk'), hs = group.querySelector('.horse'),
         bj = group.querySelector('.bj'), st = group.querySelector('.st');
-  let busy = false, lastA = -1;
+  let busy = false, lastA = -1, rampage = false;
   const act = (el, cls, ms, after) => {
     busy = true; el.classList.add(cls);
     setTimeout(() => {
@@ -1075,10 +1096,114 @@ function startSky() {
     () => act(wk, 'hop', 900, () => dust(4, true, wk)),        // Ngộ Không nhảy tưng tưng
   ];
   loop(() => {
-    if (busy) return;
+    if (busy || rampage) return;
     let i; do { i = Math.floor(Math.random() * ACTIONS.length); } while (i === lastA);
     lastA = i; ACTIONS[i]();
   }, 3500, 7000, 2500);
+
+  /* ===== Chọc Bát Giới 10 lần -> hóa điên, nổ tung, khói bụi, rồi hiện dần lại ===== */
+  let pokes = 0, pokeTimer = null;
+  const POKE_MAX = 10;
+  const OUCH = ["Ái!", "Đau nha!", "Đừng chọc nữa!", "Ê ê!", "Nhột quá!", "Hừ hừ...", "Ta nổi giận đó!", "Còn chọc nữa hả?!", "Sắp nổ rồi nha!"];
+  const bjPil = bj.querySelector('.pil');
+
+  function bubble(text, big) {
+    const e = spawn('bubble' + (big ? ' big' : ''));
+    e.textContent = text;
+    const x = gx + (bj.offsetLeft + bj.offsetWidth / 2) * sc, y = H - (big ? 150 : 135) * sc;
+    fly(e, [
+      {transform: `translate(${x}px,${y}px) translate(-50%,0)`, opacity: 1},
+      {transform: `translate(${x}px,${y - 30}px) translate(-50%,0)`, opacity: 0}
+    ], big ? 1600 : 900, {easing: 'ease-out'});
+  }
+
+  bj.addEventListener('pointerdown', ev => {
+    ev.preventDefault();
+    if (rampage) return;
+    pokes++;
+    clearTimeout(pokeTimer);
+    pokeTimer = setTimeout(() => { pokes = 0; bjPil.style.filter = ''; }, 3000);   // ngưng chọc 3 giây thì nguôi giận
+    bj.classList.remove('poke'); void bj.offsetWidth; bj.classList.add('poke');
+    bjPil.style.filter = `saturate(${1 + pokes * .2}) hue-rotate(${-pokes * 2.5}deg) drop-shadow(0 0 ${pokes}px #ef4444)`;
+    if (pokes >= POKE_MAX) { clearTimeout(pokeTimer); bjPil.style.filter = ''; goBerserk(); return; }
+    bubble(OUCH[Math.min(pokes - 1, OUCH.length - 1)]);
+  });
+
+  function goBerserk() {
+    rampage = true; pokes = 0;
+    bubble('GRÀÀÀO!!! 💢', true);
+    bj.classList.remove('poke', 'twirl');
+    bj.classList.add('rage');
+    setTimeout(() => { if (alive()) explodeAll(); }, 1800);
+  }
+
+  function explodeAll() {
+    const cx = W / 2, cy = H * 0.55;
+    bj.classList.remove('rage');
+    bj.style.opacity = '0';
+
+    // chớp sáng trắng + quả cầu lửa + tia lửa
+    const white = spawn('haze'); white.style.background = '#fff';
+    fly(white, [{opacity: 1}, {opacity: 0}], 500);
+    const fs = 260, ball = spawn('boom');
+    ball.style.width = ball.style.height = fs + 'px';
+    fly(ball, [
+      {transform: `translate(${cx - fs/2}px,${cy - fs/2}px) scale(.2)`, opacity: 1},
+      {transform: `translate(${cx - fs/2}px,${cy - fs/2}px) scale(2.2)`, opacity: 0}
+    ], 800, {easing: 'ease-out'});
+    for (let i = 0; i < 70; i++) {
+      const ang = R(0, Math.PI * 2), dist = R(60, 260), s = R(4, 10), p = spawn('spark');
+      p.style.width = p.style.height = s + 'px';
+      p.style.background = pick(['#facc15', '#f97316', '#ef4444', '#fde68a', '#fff']);
+      fly(p, [
+        {transform: `translate(${cx}px,${cy}px)`, opacity: 1},
+        {transform: `translate(${cx + Math.cos(ang) * dist}px,${cy + Math.sin(ang) * dist + 30}px)`, opacity: 0}
+      ], R(700, 1400), {easing: 'ease-out'});
+    }
+    sky.animate([
+      {transform: 'translate(0,0)'}, {transform: 'translate(-6px,4px)'}, {transform: 'translate(6px,-4px)'},
+      {transform: 'translate(-4px,-3px)'}, {transform: 'translate(0,0)'}
+    ], {duration: 450});
+
+    // sư phụ, các sư huynh bị hất văng đi khắp nơi
+    const flung = [wk, hs, st].map((el, i) => {
+      const dx = (i % 2 ? 1 : -1) * R(W * .4, W * .9), dy = -R(150, 330), rot = R(360, 1080) * (Math.random() < .5 ? -1 : 1);
+      return el.animate([
+        {transform: 'translate(0,0) rotate(0deg)', opacity: 1},
+        {transform: `translate(${dx * .8}px,${dy}px) rotate(${rot * .8}deg)`, opacity: 1, offset: .75},
+        {transform: `translate(${dx}px,${dy * .6}px) rotate(${rot}deg)`, opacity: 0}
+      ], {duration: 1100, easing: 'ease-out', fill: 'forwards'});
+    });
+
+    // khói bụi mịt mù ~5 giây
+    const haze = spawn('haze');
+    fly(haze, [{opacity: 0}, {opacity: .8, offset: .15}, {opacity: .8, offset: .7}, {opacity: 0}], 5200);
+    for (let i = 0; i < 45; i++) setTimeout(() => {
+      if (!alive()) return;
+      const s = R(60, 150), x = R(-20, W - 40), y = R(10, H - 40), puff = spawn('smoke');
+      puff.style.width = puff.style.height = s + 'px';
+      fly(puff, [
+        {transform: `translate(${x}px,${y}px) scale(.3)`, opacity: 0},
+        {transform: `translate(${x + R(-20, 20)}px,${y - 15}px) scale(1)`, opacity: .95, offset: .25},
+        {transform: `translate(${x + R(-60, 60)}px,${y - R(20, 60)}px) scale(1.6)`, opacity: 0}
+      ], R(2600, 3400), {easing: 'ease-out'});
+    }, R(0, 1800));
+    for (let i = 0; i < 14; i++) { leaf(true, -1); leaf(true, 1); }
+    dust(10, true);
+
+    // sau ~5 giây: các thầy trò lờ mờ hiện dần như lúc đầu
+    setTimeout(() => {
+      if (!alive()) return;
+      flung.forEach(a => a.cancel());
+      bj.style.opacity = '';
+      [wk, hs, st, bj].forEach(el => el.animate([
+        {opacity: 0, filter: 'blur(8px)'},
+        {opacity: .35, filter: 'blur(5px)', offset: .5},
+        {opacity: 1, filter: 'blur(0)'}
+      ], {duration: 2600, easing: 'ease-in'}));
+      setTimeout(() => { rampage = false; }, 2700);
+    }, 4800);
+  }
 }
 
 home();
